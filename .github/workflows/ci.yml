@@ -1,0 +1,74 @@
+name: Docker Build and Push Image
+on:
+  push:
+    branches: [main]
+env:
+  IMAGE_NAME: upi-link
+  MANIFEST_REPO: git@github.com:Harsh-2002/argocd.git
+  MANIFEST_PATH: k3s/arson/UPI-Link/deployment.yaml
+  GIT_USER_EMAIL: "av7312002@gmail.com"
+  GIT_USER_NAME: "Harsh-2002"
+  TZ: "Asia/Kolkata" 
+
+jobs:
+  build-and-push:
+    runs-on: [self-hosted, linux, x64]
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure Git
+        run: |
+          git config --global user.email "${{ env.GIT_USER_EMAIL }}"
+          git config --global user.name "${{ env.GIT_USER_NAME }}"
+
+      - name: Generate IST timestamp tag
+        id: timestamp
+        run: |
+          echo "tag=$(TZ='Asia/Kolkata' date +'%Y%m%d-%H%M%S')" >> $GITHUB_OUTPUT
+          echo "Using tag: $(TZ='Asia/Kolkata' date +'%Y%m%d-%H%M%S')"
+
+      # Login to private registry
+      - name: Log into Private Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ secrets.PRIVATE_DOCKER_REGISTRY_URL }}
+          username: ${{ secrets.PRIVATE_DOCKERHUB_USERNAME }}
+          password: ${{ secrets.PRIVATE_DOCKERHUB_TOKEN }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ secrets.PRIVATE_DOCKER_REGISTRY_URL }}/upi-link:${{ steps.timestamp.outputs.tag }}
+            ${{ secrets.PRIVATE_DOCKER_REGISTRY_URL }}/upi-link:latest
+
+      - name: Clone and Update Manifest
+        run: |
+          # Ensure clean state
+          rm -rf argocd || true
+          
+          # Clone with SSH
+          git clone $MANIFEST_REPO argocd
+          
+          # Update manifest with new tag
+          cd argocd
+          sed -i "s|image: ${{ secrets.PRIVATE_DOCKER_REGISTRY_URL }}/upi-link:.*|image: ${{ secrets.PRIVATE_DOCKER_REGISTRY_URL }}/upi-link:${{ steps.timestamp.outputs.tag }}|" $MANIFEST_PATH
+          
+          # Commit and push changes
+          git add $MANIFEST_PATH
+          git commit -m "Update upi-link to IST timestamp: ${{ steps.timestamp.outputs.tag }}" || echo "No changes to commit"
+          git push || echo "No changes to push"
+          
+      - name: Sync ArgoCD Application
+        run: |
+          echo "Starting sync for application..."
+          argocd app sync k3s --force
+          
+          echo "Waiting for sync to complete..."
+          argocd app wait k3s 
