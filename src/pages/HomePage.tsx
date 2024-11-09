@@ -2,12 +2,13 @@ import { ArrowRight, Zap, Shield, Share2, CheckCircle2, Sparkles, Globe, Clock, 
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 
 export default function HomePage() {
   const navigate = useNavigate();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isImagesLoaded, setIsImagesLoaded] = useState(false);
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   const illustrations = [
     '/SVG/DrawKit_Vector_Illustrations_Call waiting.svg',
@@ -54,6 +55,61 @@ export default function HomePage() {
     return () => clearInterval(timer);
   }, [isImagesLoaded]);
 
+  // Auto scroll effect with smoother animation
+  useEffect(() => {
+    const scrollContainer = scrollRef.current;
+    if (!scrollContainer) return;
+
+    let animationFrameId: number;
+    let currentScroll = 0;
+    const speed = 0.5; // Reduced speed for smoother scroll
+
+    const scroll = () => {
+      if (scrollContainer) {
+        currentScroll += speed;
+        
+        // Reset scroll position when reaching the end of first set
+        if (currentScroll >= scrollContainer.scrollWidth / 2) {
+          currentScroll = 0;
+        }
+        
+        scrollContainer.scrollLeft = currentScroll;
+        animationFrameId = requestAnimationFrame(scroll);
+      }
+    };
+
+    // Start animation
+    animationFrameId = requestAnimationFrame(scroll);
+
+    // Pause on hover/touch
+    const pauseScroll = () => cancelAnimationFrame(animationFrameId);
+    const resumeScroll = () => {
+      animationFrameId = requestAnimationFrame(scroll);
+    };
+
+    scrollContainer.addEventListener('mouseenter', pauseScroll);
+    scrollContainer.addEventListener('mouseleave', resumeScroll);
+    scrollContainer.addEventListener('touchstart', pauseScroll);
+    scrollContainer.addEventListener('touchend', resumeScroll);
+
+    return () => {
+      cancelAnimationFrame(animationFrameId);
+      if (scrollContainer) {
+        scrollContainer.removeEventListener('mouseenter', pauseScroll);
+        scrollContainer.removeEventListener('mouseleave', resumeScroll);
+        scrollContainer.removeEventListener('touchstart', pauseScroll);
+        scrollContainer.removeEventListener('touchend', resumeScroll);
+      }
+    };
+  }, []);
+
+  // Stats tile data
+  const statsTiles = [
+    { value: "0₹", label: "Free Forever" },
+    { value: "5 Sec", label: "Setup Time" },
+    { value: "100%", label: "Secure" }
+  ];
+
   return (
     <div className="bg-background">
       {/* Hero Section */}
@@ -79,54 +135,98 @@ export default function HomePage() {
           <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
         </Button>
 
-        {/* Hero Illustrations with loading state */}
-        <div className="mt-12 sm:mt-16 max-w-4xl mx-auto">
-          <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: isImagesLoaded ? 1 : 0 }}
-            transition={{ duration: 0.5 }}
-            className="relative h-[200px] sm:h-[300px] md:h-[400px] overflow-hidden rounded-lg bg-muted/30"
-          >
-            {illustrations.map((src, index) => (
-              <motion.div
-                key={src}
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ 
-                  opacity: currentImageIndex === index ? 1 : 0,
-                  scale: currentImageIndex === index ? 1 : 0.95,
-                  zIndex: currentImageIndex === index ? 1 : 0
-                }}
-                transition={{ 
-                  type: "spring",
-                  stiffness: 80,
-                  damping: 20
-                }}
-                className="absolute inset-0 flex items-center justify-center p-4"
-              >
-                <img 
-                  src={src}
-                  alt={`Illustration ${index + 1}`}
-                  className="w-full h-full object-contain"
-                  loading={index === 0 ? "eager" : "lazy"}
-                />
-              </motion.div>
-            ))}
-          </motion.div>
+        {/* Enhanced Hero Illustration Section */}
+        <div className="mt-12 sm:mt-16 max-w-5xl mx-auto relative">
+          {/* Background Elements */}
+          <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-transparent to-primary/5 rounded-3xl" />
+          <div className="absolute -inset-0.5 bg-gradient-to-r from-primary/10 to-primary/10 blur-2xl opacity-20" />
 
-          {/* Navigation Dots */}
-          <div className="flex justify-center gap-2 mt-4">
-            {illustrations.map((_, index) => (
-              <button
-                key={index}
-                onClick={() => setCurrentImageIndex(index)}
-                className={`w-2 h-2 rounded-full transition-all duration-300 ${
-                  currentImageIndex === index 
-                    ? 'w-6 bg-primary' 
-                    : 'bg-primary/30 hover:bg-primary/50'
-                }`}
-                aria-label={`Go to illustration ${index + 1}`}
-              />
-            ))}
+          {/* Main Content Container */}
+          <div className="relative bg-white/50 backdrop-blur-sm rounded-3xl p-6 sm:p-8 shadow-xl">
+            {/* Stats Bar - Infinite Scroll on Mobile */}
+            <div className="relative mb-6 sm:mb-8">
+              {/* Scrollable Container */}
+              <div 
+                ref={scrollRef}
+                className="flex sm:grid sm:grid-cols-3 gap-3 overflow-x-auto pb-4 sm:pb-0 px-4 sm:px-0 no-scrollbar"
+              >
+                {/* First set of tiles */}
+                {statsTiles.map((stat, index) => (
+                  <motion.div 
+                    key={`tile-1-${index}`}
+                    initial={{ backgroundColor: "rgb(255, 255, 255)" }}
+                    className="flex-shrink-0 w-[150px] sm:w-auto p-4 rounded-3xl bg-white shadow-[0_2px_10px_-3px_rgba(0,0,0,0.07)] hover:shadow-[0_2px_15px_-3px_rgba(0,0,0,0.1)] transition-all duration-300"
+                  >
+                    <h4 className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground mb-0.5">{stat.value}</h4>
+                    <p className="text-xs sm:text-sm text-muted-foreground">{stat.label}</p>
+                  </motion.div>
+                ))}
+                
+                {/* Duplicate set for infinite scroll (only shown on mobile) */}
+                {statsTiles.map((stat, index) => (
+                  <motion.div 
+                    key={`tile-2-${index}`}
+                    initial={{ backgroundColor: "rgb(255, 255, 255)" }}
+                    className="flex-shrink-0 w-[150px] sm:hidden p-4 rounded-3xl bg-white shadow-[0_2px_10px_-3px_rgba(0,0,0,0.07)] hover:shadow-[0_2px_15px_-3px_rgba(0,0,0,0.1)] transition-all duration-300"
+                  >
+                    <h4 className="text-xl font-bold text-foreground mb-0.5">{stat.value}</h4>
+                    <p className="text-xs text-muted-foreground">{stat.label}</p>
+                  </motion.div>
+                ))}
+              </div>
+            </div>
+
+            {/* Illustration Container */}
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: isImagesLoaded ? 1 : 0 }}
+              transition={{ duration: 0.5 }}
+              className="relative"
+            >
+              {/* Main Illustration */}
+              <div className="relative h-[200px] sm:h-[300px] md:h-[400px] overflow-hidden rounded-lg">
+                {illustrations.map((src, index) => (
+                  <motion.div
+                    key={src}
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ 
+                      opacity: currentImageIndex === index ? 1 : 0,
+                      scale: currentImageIndex === index ? 1 : 0.95,
+                      zIndex: currentImageIndex === index ? 1 : 0
+                    }}
+                    transition={{ 
+                      type: "spring",
+                      stiffness: 80,
+                      damping: 20
+                    }}
+                    className="absolute inset-0 flex items-center justify-center p-4"
+                  >
+                    <img 
+                      src={src}
+                      alt={`Illustration ${index + 1}`}
+                      className="w-full h-full object-contain"
+                      loading={index === 0 ? "eager" : "lazy"}
+                    />
+                  </motion.div>
+                ))}
+              </div>
+
+              {/* Navigation Dots */}
+              <div className="flex justify-center gap-2 mt-6">
+                {illustrations.map((_, index) => (
+                  <button
+                    key={index}
+                    onClick={() => setCurrentImageIndex(index)}
+                    className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                      currentImageIndex === index 
+                        ? 'w-6 bg-primary' 
+                        : 'bg-primary/30 hover:bg-primary/50'
+                    }`}
+                    aria-label={`Go to illustration ${index + 1}`}
+                  />
+                ))}
+              </div>
+            </motion.div>
           </div>
         </div>
       </motion.div>
