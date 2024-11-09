@@ -15,5 +15,6 @@ export default defineConfig({
   },
   optimizeDeps: {
     exclude: ['lucide-react'],
+    include: ['html2canvas']
   },
 });

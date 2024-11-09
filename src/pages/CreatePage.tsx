@@ -6,10 +6,10 @@ import { useState } from 'react';
 import { AlertCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
-// Updated UPI App configurations with correct handles
+// Updated UPI App configurations
 const UPI_APPS = [
   { name: 'PhonePe', handle: '@ybl' },
-  { name: 'Google Pay', handle: '@okaxis' },
+  { name: 'Google Pay', handle: '@okicici' },
   { name: 'Paytm', handle: '@paytm' },
   { name: 'BHIM', handle: '@upi' },
   { name: 'Amazon Pay', handle: '@apl' },
@@ -26,24 +26,43 @@ export default function CreatePage() {
     description: ''
   });
 
-  // Handle UPI app selection
+  // Handle UPI app selection with toggle functionality
   const handleUpiAppSelect = (handle: string) => {
-    const baseId = formData.upiId.split('@')[0];
-    setFormData({
-      ...formData,
-      upiHandle: handle,
-      upiId: baseId ? `${baseId}${handle}` : ''
-    });
+    // If clicking the same handle again, deselect it
+    if (handle === formData.upiHandle) {
+      setFormData({
+        ...formData,
+        upiHandle: '',
+        upiId: formData.upiId.split('@')[0] // Keep only the base ID
+      });
+    } else {
+      const baseId = formData.upiId.includes('@') 
+        ? formData.upiId.split('@')[0] 
+        : formData.upiId;
+      setFormData({
+        ...formData,
+        upiHandle: handle,
+        upiId: baseId ? `${baseId}${handle}` : ''
+      });
+    }
   };
 
   // Handle UPI ID input
   const handleUpiIdChange = (value: string) => {
-    // Remove any existing handles
-    const cleanValue = value.split('@')[0];
-    setFormData({
-      ...formData,
-      upiId: formData.upiHandle ? `${cleanValue}${formData.upiHandle}` : cleanValue
-    });
+    if (!formData.upiHandle) {
+      // No UPI app selected, allow full UPI ID input
+      setFormData({
+        ...formData,
+        upiId: value
+      });
+    } else {
+      // UPI app selected, only allow base ID
+      const cleanValue = value.split('@')[0];
+      setFormData({
+        ...formData,
+        upiId: formData.upiHandle ? `${cleanValue}${formData.upiHandle}` : cleanValue
+      });
+    }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -93,31 +112,12 @@ export default function CreatePage() {
                   key={app.handle}
                   type="button"
                   variant={formData.upiHandle === app.handle ? "default" : "outline"}
-                  className={`
-                    h-auto py-2 sm:py-3 px-3 sm:px-4 
-                    flex flex-col items-center gap-0.5 sm:gap-1 
-                    transition-all duration-200
-                    ${formData.upiHandle === app.handle 
-                      ? 'bg-primary text-primary-foreground ring-2 ring-primary/20 hover:bg-primary/90' 
-                      : 'hover:bg-primary/5 hover:border-primary/30'
-                    }
-                  `}
+                  className={`h-auto py-2 sm:py-3 px-3 sm:px-4 flex flex-col items-center gap-0.5 sm:gap-1 transition-all duration-200
+                    ${formData.upiHandle === app.handle ? 'ring-2 ring-primary/20' : 'hover:bg-primary/5'}`}
                   onClick={() => handleUpiAppSelect(app.handle)}
                 >
-                  <span className={`text-xs sm:text-sm font-medium ${
-                    formData.upiHandle === app.handle 
-                      ? 'text-primary-foreground' 
-                      : 'text-foreground'
-                  }`}>
-                    {app.name}
-                  </span>
-                  <span className={`text-[10px] sm:text-xs ${
-                    formData.upiHandle === app.handle 
-                      ? 'text-primary-foreground/80' 
-                      : 'text-muted-foreground'
-                  }`}>
-                    {app.handle}
-                  </span>
+                  <span className="text-xs sm:text-sm font-medium">{app.name}</span>
+                  <span className="text-[10px] sm:text-xs text-muted-foreground">{app.handle}</span>
                 </Button>
               ))}
             </div>
@@ -126,20 +126,24 @@ export default function CreatePage() {
             <div className="relative">
               <Input
                 id="upiId"
-                placeholder="Enter your UPI ID"
-                value={formData.upiId.split('@')[0] || ''}
+                placeholder={formData.upiHandle ? "Enter your UPI ID" : "Enter complete UPI ID (with @handle)"}
+                value={formData.upiHandle ? formData.upiId.split('@')[0] : formData.upiId}
                 onChange={(e) => handleUpiIdChange(e.target.value)}
                 required
-                className="h-10 sm:h-11 text-sm sm:text-base pr-20 transition-all duration-200 focus:ring-2 focus:ring-primary/20"
+                className="pr-20 transition-all duration-200 focus:ring-2 focus:ring-primary/20"
               />
-              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs sm:text-sm text-muted-foreground">
-                {formData.upiHandle}
-              </span>
+              {formData.upiHandle && (
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
+                  {formData.upiHandle}
+                </span>
+              )}
             </div>
             
-            <p className="text-xs sm:text-sm text-muted-foreground flex items-center gap-1 mt-1.5 sm:mt-2">
-              <AlertCircle className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-              Select your UPI app and enter your ID carefully
+            <p className="text-sm text-muted-foreground flex items-center gap-1 mt-2">
+              <AlertCircle className="h-4 w-4" />
+              {formData.upiHandle 
+                ? "Enter your UPI ID or click selected app again to enter custom UPI ID" 
+                : "Select a UPI app or enter complete UPI ID including @handle"}
             </p>
           </div>
 
@@ -170,16 +174,16 @@ export default function CreatePage() {
               placeholder="e.g., Payment for services"
               value={formData.description}
               onChange={(e) => {
-                if (e.target.value.length <= 100) {
+                if (e.target.value.length <= 50) {
                   setFormData({ ...formData, description: e.target.value })
                 }
               }}
-              maxLength={100}
+              maxLength={50}
               className="transition-all duration-200 focus:ring-2 focus:ring-primary/20"
             />
-            <div className="flex justify-between items-center text-sm text-muted-foreground">
+            <div className="flex justify-between text-xs text-muted-foreground">
               <span>Add a note for the payment</span>
-              <span>{formData.description.length}/100</span>
+              <span>{formData.description.length}/50</span>
             </div>
           </div>
 

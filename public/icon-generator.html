@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Icon Generator</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            padding: 20px;
+            background: #f5f5f5;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .controls {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+        }
+        .preview {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+        .item {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        canvas {
+            width: 100%;
+            height: auto;
+            margin-bottom: 10px;
+            border: 1px solid #eee;
+            border-radius: 4px;
+        }
+        button {
+            background: #4F46E5;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        button:hover {
+            opacity: 0.9;
+        }
+        .filename {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 8px;
+        }
+        .status {
+            color: #666;
+            margin-left: 10px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <h1>UPI Link Icon Generator</h1>
+    <div class="controls">
+        <button onclick="generateAll()">Generate All Icons</button>
+        <button onclick="downloadAll()">Download All</button>
+        <span class="status" id="status"></span>
+    </div>
+    <div class="preview" id="preview"></div>
+
+    <script>
+        // Icon configurations
+        const configs = [
+            { name: 'icon-192.png', size: 192 },
+            { name: 'icon-512.png', size: 512 },
+            { name: 'icon-152.png', size: 152 },
+            { name: 'icon-167.png', size: 167 },
+            { name: 'icon-180.png', size: 180 },
+            { name: 'splash-2048x2732.png', width: 2048, height: 2732 },
+            { name: 'splash-1668x2388.png', width: 1668, height: 2388 },
+            { name: 'splash-1536x2048.png', width: 1536, height: 2048 },
+            { name: 'splash-1125x2436.png', width: 1125, height: 2436 },
+            { name: 'splash-1242x2208.png', width: 1242, height: 2208 }
+        ];
+
+        // Updated SVG Icon template with precise centering
+        const iconSvg = encodeURIComponent(`
+            <svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+                <defs>
+                    <style>
+                        @font-face {
+                            font-family: 'CustomFont';
+                            src: local('Arial');
+                        }
+                    </style>
+                </defs>
+                <rect width="512" height="512" rx="128" fill="#4F46E5"/>
+                <text 
+                    x="50%" 
+                    y="50%" 
+                    text-anchor="middle" 
+                    dominant-baseline="central" 
+                    font-size="280" 
+                    font-weight="700" 
+                    fill="white" 
+                    font-family="CustomFont, Arial, sans-serif"
+                    style="user-select: none;"
+                    dy=".1em"
+                >₹</text>
+            </svg>
+        `);
+
+        function setStatus(message) {
+            document.getElementById('status').textContent = message;
+        }
+
+        function generateImage(canvas, svg, width, height, isSplash = false) {
+            return new Promise((resolve, reject) => {
+                const ctx = canvas.getContext('2d');
+                const img = new Image();
+                
+                img.onerror = (error) => {
+                    console.error('Error loading image:', error);
+                    setStatus('Error generating icons. Check console.');
+                    reject(error);
+                };
+                
+                img.onload = () => {
+                    try {
+                        canvas.width = width;
+                        canvas.height = height;
+                        
+                        if (isSplash) {
+                            // For splash screens, center the icon
+                            ctx.fillStyle = '#ffffff';
+                            ctx.fillRect(0, 0, width, height);
+                            
+                            const iconSize = Math.min(width, height) * 0.4;
+                            const x = (width - iconSize) / 2;
+                            const y = (height - iconSize) / 2;
+                            
+                            ctx.drawImage(img, x, y, iconSize, iconSize);
+                        } else {
+                            // For icons, fill the entire space
+                            ctx.drawImage(img, 0, 0, width, height);
+                        }
+                        
+                        resolve(canvas.toDataURL('image/png'));
+                    } catch (error) {
+                        console.error('Error drawing image:', error);
+                        setStatus('Error generating icons. Check console.');
+                        reject(error);
+                    }
+                };
+                
+                // Use proper SVG data URL
+                img.src = `data:image/svg+xml;charset=utf-8,${svg}`;
+                
+                // Log the SVG for debugging
+                console.log('SVG source:', img.src);
+            });
+        }
+
+        async function downloadAll() {
+            setStatus('Downloading all icons...');
+            const canvases = document.querySelectorAll('canvas');
+            for (let i = 0; i < canvases.length; i++) {
+                const canvas = canvases[i];
+                const link = document.createElement('a');
+                link.download = configs[i].name;
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+                await new Promise(resolve => setTimeout(resolve, 100)); // Small delay between downloads
+            }
+            setStatus('All icons downloaded!');
+        }
+
+        async function generateAll() {
+            try {
+                setStatus('Generating icons...');
+                const preview = document.getElementById('preview');
+                preview.innerHTML = '';
+
+                for (const config of configs) {
+                    const div = document.createElement('div');
+                    div.className = 'item';
+                    
+                    const canvas = document.createElement('canvas');
+                    const isSplash = config.name.startsWith('splash-');
+                    
+                    try {
+                        const dataUrl = await generateImage(
+                            canvas,
+                            iconSvg,
+                            config.width || config.size,
+                            config.height || config.size,
+                            isSplash
+                        );
+
+                        const filename = document.createElement('div');
+                        filename.className = 'filename';
+                        filename.textContent = config.name;
+
+                        const downloadBtn = document.createElement('button');
+                        downloadBtn.textContent = 'Download';
+                        downloadBtn.onclick = () => {
+                            const link = document.createElement('a');
+                            link.download = config.name;
+                            link.href = dataUrl;
+                            link.click();
+                        };
+
+                        div.appendChild(filename);
+                        div.appendChild(canvas);
+                        div.appendChild(downloadBtn);
+                        preview.appendChild(div);
+                    } catch (error) {
+                        console.error(`Error generating ${config.name}:`, error);
+                    }
+                }
+                setStatus('Icons generated! Click "Download All" or individual download buttons.');
+            } catch (error) {
+                console.error('Error in generateAll:', error);
+                setStatus('Error generating icons. Check console.');
+            }
+        }
+
+        // Generate icons on page load
+        window.onload = generateAll;
+    </script>
+</body>
+</html> 

@@ -4,7 +4,7 @@ import { QRCodeSVG } from 'qrcode.react';
 import { Button } from '@/components/ui/button';
 import { Share2, Download, Smartphone, Code, Check, ExternalLink } from 'lucide-react';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
-import html2canvas from 'html2canvas';
+import html2canvas from 'html2canvas/dist/html2canvas.js';
 import { useState, useEffect } from 'react';
 
 // Add CTA variations
@@ -35,6 +35,13 @@ export default function PaymentSharePage() {
     upiId: searchParams.get('upiId') || '',
     amount: searchParams.get('amount') || '',
     description: searchParams.get('description') || ''
+  };
+
+  // Format number with commas
+  const formatNumber = (num: string) => {
+    if (!num) return '';
+    const number = parseFloat(num);
+    return new Intl.NumberFormat('en-IN').format(number);
   };
 
   // Generate UPI URL
@@ -145,12 +152,14 @@ export default function PaymentSharePage() {
         {/* Downloadable content */}
         <div id="downloadable-card" className="bg-white p-4 sm:p-6 rounded-lg">
           <div className="text-center mb-6 sm:mb-8">
-            <h1 className="text-xl sm:text-2xl font-bold mb-2">Pay {paymentData.name}</h1>
+            <h1 className="text-2xl font-bold mb-2">Pay {paymentData.name}</h1>
             {paymentData.amount && (
-              <p className="text-2xl sm:text-3xl font-bold text-primary">₹{paymentData.amount}</p>
+              <p className="text-3xl font-bold text-primary">
+                ₹{formatNumber(paymentData.amount)}
+              </p>
             )}
             {paymentData.description && (
-              <p className="text-sm sm:text-base text-muted-foreground mt-2 break-words">
+              <p className="text-muted-foreground mt-2 break-words text-sm">
                 {paymentData.description}
               </p>
             )}
