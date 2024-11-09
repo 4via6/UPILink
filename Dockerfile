@@ -12,7 +12,11 @@ RUN npm install
 # Copy source code
 COPY . .
 
-# Remove unused UI components and files
+# Create types directory and declaration file
+RUN mkdir -p src/types && \
+    echo "declare module 'html2canvas/dist/html2canvas.js' { const html2canvas: any; export default html2canvas; }" > src/types/html2canvas.d.ts
+
+# Remove unused UI components
 RUN rm -rf src/components/ui/accordion.tsx \
     src/components/ui/alert-dialog.tsx \
     src/components/ui/aspect-ratio.tsx \
@@ -69,8 +73,8 @@ WORKDIR /app
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/package*.json ./
 
-# Install production dependencies and Vite
-RUN npm install --production && npm install -g vite
+# Install only production dependencies
+RUN npm install --production
 
 # Expose port
 EXPOSE 3000
@@ -81,4 +85,4 @@ ENV HOST=0.0.0.0
 ENV PORT=3000
 
 # Start the app using Vite's preview server
-CMD ["vite", "preview", "--host", "--port", "3000"]
+CMD ["npm", "run", "preview", "--", "--host", "--port", "3000"]
