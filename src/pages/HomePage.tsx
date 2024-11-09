@@ -136,14 +136,26 @@ export default function HomePage() {
         </Button>
 
         {/* Enhanced Hero Illustration Section */}
-        <div className="mt-12 sm:mt-16 max-w-5xl mx-auto relative">
+        <motion.div 
+          initial={{ opacity: 1, backgroundColor: "rgb(255, 255, 255)" }}
+          className="mt-12 sm:mt-16 max-w-5xl mx-auto relative"
+        >
           {/* Background Elements */}
-          <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-transparent to-primary/5 rounded-3xl" />
-          <div className="absolute -inset-0.5 bg-gradient-to-r from-primary/10 to-primary/10 blur-2xl opacity-20" />
+          <motion.div 
+            initial={{ opacity: 1, backgroundColor: "rgb(255, 255, 255)" }}
+            className="absolute inset-0 bg-gradient-to-r from-primary/5 via-transparent to-primary/5 rounded-3xl" 
+          />
+          <motion.div 
+            initial={{ opacity: 0.2 }}
+            className="absolute -inset-0.5 bg-gradient-to-r from-primary/10 to-primary/10 blur-2xl opacity-20" 
+          />
 
           {/* Main Content Container */}
-          <div className="relative bg-white/50 backdrop-blur-sm rounded-3xl p-6 sm:p-8 shadow-xl">
-            {/* Stats Bar - Infinite Scroll on Mobile */}
+          <motion.div 
+            initial={{ backgroundColor: "rgb(255, 255, 255)" }}
+            className="relative bg-white/50 backdrop-blur-sm rounded-3xl p-6 sm:p-8 shadow-xl"
+          >
+            {/* Stats Bar */}
             <div className="relative mb-6 sm:mb-8">
               {/* Scrollable Container */}
               <div 
@@ -154,11 +166,11 @@ export default function HomePage() {
                 {statsTiles.map((stat, index) => (
                   <motion.div 
                     key={`tile-1-${index}`}
-                    initial={{ backgroundColor: "rgb(255, 255, 255)" }}
-                    className="flex-shrink-0 w-[150px] sm:w-auto p-4 rounded-3xl bg-white shadow-[0_2px_10px_-3px_rgba(0,0,0,0.07)] hover:shadow-[0_2px_15px_-3px_rgba(0,0,0,0.1)] transition-all duration-300"
+                    initial={{ backgroundColor: "rgb(249, 250, 251)" }}
+                    className="flex-shrink-0 w-[150px] sm:w-auto p-4 rounded-3xl bg-gray-50 shadow-[0_2px_10px_-3px_rgba(0,0,0,0.07)] hover:shadow-[0_2px_15px_-3px_rgba(0,0,0,0.1)] transition-all duration-300"
                   >
-                    <h4 className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground mb-0.5">{stat.value}</h4>
-                    <p className="text-xs sm:text-sm text-muted-foreground">{stat.label}</p>
+                    <h4 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 mb-0.5">{stat.value}</h4>
+                    <p className="text-xs sm:text-sm text-gray-500">{stat.label}</p>
                   </motion.div>
                 ))}
                 
@@ -166,11 +178,11 @@ export default function HomePage() {
                 {statsTiles.map((stat, index) => (
                   <motion.div 
                     key={`tile-2-${index}`}
-                    initial={{ backgroundColor: "rgb(255, 255, 255)" }}
-                    className="flex-shrink-0 w-[150px] sm:hidden p-4 rounded-3xl bg-white shadow-[0_2px_10px_-3px_rgba(0,0,0,0.07)] hover:shadow-[0_2px_15px_-3px_rgba(0,0,0,0.1)] transition-all duration-300"
+                    initial={{ backgroundColor: "rgb(249, 250, 251)" }}
+                    className="flex-shrink-0 w-[150px] sm:hidden p-4 rounded-3xl bg-gray-50 shadow-[0_2px_10px_-3px_rgba(0,0,0,0.07)] hover:shadow-[0_2px_15px_-3px_rgba(0,0,0,0.1)] transition-all duration-300"
                   >
-                    <h4 className="text-xl font-bold text-foreground mb-0.5">{stat.value}</h4>
-                    <p className="text-xs text-muted-foreground">{stat.label}</p>
+                    <h4 className="text-xl font-bold text-gray-900 mb-0.5">{stat.value}</h4>
+                    <p className="text-xs text-gray-500">{stat.label}</p>
                   </motion.div>
                 ))}
               </div>
@@ -178,9 +190,9 @@ export default function HomePage() {
 
             {/* Illustration Container */}
             <motion.div 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: isImagesLoaded ? 1 : 0 }}
-              transition={{ duration: 0.5 }}
+              initial={{ opacity: 1 }}
+              animate={{ opacity: isImagesLoaded ? 1 : 1 }}
+              transition={{ duration: 0.3 }}
               className="relative"
             >
               {/* Main Illustration */}
@@ -227,8 +239,8 @@ export default function HomePage() {
                 ))}
               </div>
             </motion.div>
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
       </motion.div>
 
       {/* Features Section with better mobile layout */}
