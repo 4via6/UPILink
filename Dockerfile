@@ -73,8 +73,9 @@ WORKDIR /app
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/package*.json ./
 
-# Install only production dependencies
-RUN npm install --production
+# Install production dependencies and Vite
+RUN npm install --production && \
+    npm install -g vite serve
 
 # Expose port
 EXPOSE 3000
@@ -84,5 +85,5 @@ ENV NODE_ENV=production
 ENV HOST=0.0.0.0
 ENV PORT=3000
 
-# Start the app using Vite's preview server
-CMD ["npm", "run", "preview", "--", "--host", "--port", "3000"]
+# Use serve instead of Vite preview
+CMD ["serve", "-s", "dist", "-l", "3000"]
