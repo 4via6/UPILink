@@ -9,10 +9,11 @@ env:
   GIT_USER_EMAIL: "av7312002@gmail.com"
   GIT_USER_NAME: "Harsh-2002"
   TZ: "Asia/Kolkata" 
+  SLACK_WEBHOOK: "https://hooks.slack.com/services/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"
 
 jobs:
   build-and-push:
-    runs-on: [self-hosted, linux, x64] 
+    runs-on: [self-hosted, linux, x64]
     permissions:
       contents: read
       packages: write
@@ -65,10 +66,115 @@ jobs:
           git commit -m "Update upi-link to IST timestamp: ${{ steps.timestamp.outputs.tag }}" || echo "No changes to commit"
           git push || echo "No changes to push"
           
-      - name: Sync ArgoCD Application
+      - name: Login to ArgoCD
         run: |
-          echo "Starting sync for application..."
-          argocd app sync k3s --force
+          argocd login argocd.srvr.site --grpc-web \
+            --username ${{ secrets.ARGOCD_USERNAME }} \
+            --password ${{ secrets.ARGOCD_PASSWORD }}
           
-          echo "Waiting for sync to complete..."
-          argocd app wait k3s 
+      - name: Get Last Commit Message
+        id: commit
+        run: |
+          echo "message=$(git log -1 --pretty=%B)" >> $GITHUB_OUTPUT
+
+      - name: ArgoCD Sync with Strategy
+        id: sync
+        run: |
+          argocd app sync k3s \
+            --force \
+            --prune \
+            --self-heal \
+            --allow-empty \
+            --retry-limit 3
+          
+          echo "Starting sync for application..."
+          argocd app wait k3s
+
+      - name: Notify Slack on Success
+        if: success()
+        run: |
+          curl -X POST -H 'Content-type: application/json' \
+            --data '{
+              "blocks": [
+                {
+                  "type": "header",
+                  "text": {
+                    "type": "plain_text",
+                    "text": "✅ Deployment Successful",
+                    "emoji": true
+                  }
+                },
+                {
+                  "type": "section",
+                  "fields": [
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Image:*\n`${{ secrets.PRIVATE_DOCKER_REGISTRY_URL }}/upi-link:${{ steps.timestamp.outputs.tag }}`"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Environment:*\nProduction"
+                    }
+                  ]
+                },
+                {
+                  "type": "section",
+                  "fields": [
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Last Commit:*\n`${{ steps.commit.outputs.message }}`"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Deployed By:*\n${{ github.actor }}"
+                    }
+                  ]
+                },
+                {
+                  "type": "context",
+                  "elements": [
+                    {
+                      "type": "mrkdwn",
+                      "text": "Deployment completed at: $(date)"
+                    }
+                  ]
+                }
+              ]
+            }' ${{ env.SLACK_WEBHOOK }}
+
+      - name: Notify Slack on Failure
+        if: failure()
+        run: |
+          curl -X POST -H 'Content-type: application/json' \
+            --data '{
+              "blocks": [
+                {
+                  "type": "header",
+                  "text": {
+                    "type": "plain_text",
+                    "text": "❌ Deployment Failed",
+                    "emoji": true
+                  }
+                },
+                {
+                  "type": "section",
+                  "fields": [
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Image:*\n`${{ secrets.PRIVATE_DOCKER_REGISTRY_URL }}/upi-link:${{ steps.timestamp.outputs.tag }}`"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Environment:*\nProduction"
+                    }
+                  ]
+                },
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*Error:* Check GitHub Actions for details"
+                  }
+                }
+              ]
+            }' ${{ env.SLACK_WEBHOOK }}
