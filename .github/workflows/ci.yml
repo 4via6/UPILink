@@ -83,12 +83,11 @@ jobs:
           argocd app sync k3s \
             --force \
             --prune \
-            --self-heal \
             --allow-empty \
             --retry-limit 3
           
           echo "Starting sync for application..."
-          argocd app wait k3s
+          argocd app wait k3s --timeout 300
 
       - name: Notify Slack on Success
         if: success()
