@@ -83,7 +83,6 @@ jobs:
           argocd app sync k3s \
             --force \
             --prune \
-            --allow-empty \
             --retry-limit 3
           
           echo "Starting sync for application..."
