@@ -16,7 +16,7 @@ COPY . .
 RUN mkdir -p src/types && \
     echo "declare module 'html2canvas/dist/html2canvas.js' { const html2canvas: any; export default html2canvas; }" > src/types/html2canvas.d.ts
 
-# Remove unused UI components
+# Remove unused UI components and QRColorPicker
 RUN rm -rf src/components/ui/accordion.tsx \
     src/components/ui/alert-dialog.tsx \
     src/components/ui/aspect-ratio.tsx \
@@ -56,7 +56,8 @@ RUN rm -rf src/components/ui/accordion.tsx \
     src/components/ui/tooltip.tsx \
     src/components/ui/toaster.tsx \
     src/hooks/use-toast.ts \
-    src/pages/PaymentPage.tsx
+    src/pages/PaymentPage.tsx \
+    src/components/QRColorPicker.tsx
 
 # Install additional dependencies
 RUN npm install html2canvas qrcode.react
@@ -73,9 +74,9 @@ WORKDIR /app
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/package*.json ./
 
-# Install production dependencies and Vite
+# Install production dependencies and serve
 RUN npm install --production && \
-    npm install -g vite serve
+    npm install -g serve
 
 # Expose port
 EXPOSE 3000

@@ -330,26 +330,48 @@ export default function HomePage() {
         </div>
       </div>
 
-      {/* CTA Section */}
+      {/* Enhanced CTA Section */}
       <motion.div 
-        initial={{ opacity: 0 }}
-        whileInView={{ opacity: 1 }}
-        viewport={{ once: true }}
-        className="container mx-auto px-4 py-20 text-center"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="container mx-auto px-4 py-20"
       >
-        <div className="bg-primary/10 rounded-2xl p-12">
-          <h2 className="text-3xl font-bold mb-6">Ready to Get Started?</h2>
-          <p className="text-muted-foreground mb-8 max-w-xl mx-auto">
-            Create your UPI payment page now and start accepting payments in minutes.
-          </p>
-          <Button
-            size="lg"
-            onClick={() => navigate('/create')}
-            className="group bg-primary hover:bg-primary/90 text-primary-foreground hover:scale-105 transition-all duration-200"
-          >
-            Create Your Page
-            <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
-          </Button>
+        <div className="relative max-w-5xl mx-auto">
+          {/* Background Elements */}
+          <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-transparent to-primary/5 rounded-3xl" />
+          <div className="absolute -inset-0.5 bg-gradient-to-r from-primary/10 to-primary/10 blur-2xl opacity-20" />
+
+          <div className="relative bg-white/50 backdrop-blur-sm rounded-3xl p-8 sm:p-12 shadow-xl border border-primary/10">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-8">
+              <div className="text-center sm:text-left">
+                <h2 className="text-2xl sm:text-3xl font-bold mb-3 bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/70">
+                  Ready to Get Started?
+                </h2>
+                <p className="text-muted-foreground max-w-md">
+                  Create your UPI payment page now and start accepting payments in seconds. No registration required.
+                </p>
+              </div>
+
+              <div className="flex flex-col gap-4 w-full sm:w-auto">
+                <Button
+                  size="lg"
+                  onClick={() => navigate('/create')}
+                  className="group bg-primary hover:bg-primary/90 text-primary-foreground hover:scale-105 transition-all duration-200 h-12 px-8"
+                >
+                  Create Payment Page
+                  <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                </Button>
+                <span className="text-xs text-center text-muted-foreground">
+                  Free forever • No sign up needed
+                </span>
+              </div>
+            </div>
+
+            {/* Decorative Elements */}
+            <div className="absolute -top-6 -left-6 w-12 h-12 bg-primary/10 rounded-full blur-xl" />
+            <div className="absolute -bottom-8 -right-8 w-16 h-16 bg-primary/10 rounded-full blur-xl" />
+          </div>
         </div>
       </motion.div>
     </div>

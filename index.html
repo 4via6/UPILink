@@ -1,30 +1,58 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
+    <!-- HTTPS Redirect Script -->
+    <script>
+      // Only redirect if:
+      // 1. Not already on HTTPS
+      // 2. Not on localhost
+      // 3. Not on IP address
+      // 4. Not on file protocol
+      if (
+        window.location.protocol === 'http:' && 
+        window.location.hostname !== 'localhost' && 
+        !/^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$/.test(window.location.hostname) &&
+        window.location.protocol !== 'file:'
+      ) {
+        window.location.href = window.location.href.replace('http:', 'https:');
+      }
+    </script>
+
     <meta charset="UTF-8" />
-    
-    <!-- Basic Favicon - using 192px for favicon -->
     <link rel="icon" type="image/png" href="/icon-192.png" />
-    
-    <!-- Apple Touch Icons -->
-    <link rel="apple-touch-icon" sizes="180x180" href="/icon-180.png" />
-    <link rel="apple-touch-icon" sizes="152x152" href="/icon-152.png" />
-    <link rel="apple-touch-icon" sizes="167x167" href="/icon-167.png" />
-    
-    <!-- Primary Icons -->
-    <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png" />
-    <link rel="icon" type="image/png" sizes="512x512" href="/icon-512.png" />
-    
-    <!-- Other Meta Tags -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <meta name="theme-color" content="#ffffff" />
     
+    <!-- Primary Meta Tags -->
     <title>UPI Link - Create Payment Pages Instantly</title>
+    <meta name="title" content="UPI Link - Create Payment Pages Instantly" />
+    <meta name="description" content="Generate shareable UPI payment links and QR codes instantly. No sign-up required. Free forever." />
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://upi.srvr.site/" />
+    <meta property="og:title" content="UPI Link - Create Payment Pages Instantly" />
+    <meta property="og:description" content="Generate shareable UPI payment links and QR codes instantly. No sign-up required. Free forever." />
+    <meta property="og:image" content="https://upi.srvr.site/preview.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image" />
+    <meta property="twitter:url" content="https://upi.srvr.site/" />
+    <meta property="twitter:title" content="UPI Link - Create Payment Pages Instantly" />
+    <meta property="twitter:description" content="Generate shareable UPI payment links and QR codes instantly. No sign-up required. Free forever." />
+    <meta property="twitter:image" content="https://upi.srvr.site/preview.png" />
     
     <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#ffffff" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="UPI Link" />
+    
+    <!-- iOS Icons -->
+    <link rel="apple-touch-icon" sizes="180x180" href="/icon-180.png" />
+    <link rel="apple-touch-icon" sizes="152x152" href="/icon-152.png" />
+    <link rel="apple-touch-icon" sizes="167x167" href="/icon-167.png" />
     
     <!-- Web App Manifest -->
     <link rel="manifest" href="/manifest.json" />
