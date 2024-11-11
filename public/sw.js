@@ -5,104 +5,113 @@ const DYNAMIC_CACHE = 'upi2qr-dynamic-v1';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
+  '/create',
   '/manifest.json',
   '/offline.html',
   '/icon-192.png',
   '/icon-512.png',
-  '/preview.png'
+  '/preview.png',
+  // Add all your critical CSS and JS files
+  '/assets/index.css',
+  '/assets/index.js'
 ];
 
-// Install event
+// Routes that should serve index.html for SPA
+const ROUTES = [
+  '/',
+  '/create',
+  '/pay'
+];
+
+// Install event - Cache critical assets
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then((cache) => cache.addAll(STATIC_ASSETS))
   );
+  self.skipWaiting(); // Ensure new service worker takes over immediately
 });
 
-// Enhanced fetch event with different strategies
+// Enhanced fetch event with better routing
 self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
-  // Strategy for API calls
-  if (url.pathname.startsWith('/api/')) {
-    event.respondWith(networkFirstStrategy(request));
+  // Handle navigation requests
+  if (request.mode === 'navigate' || (request.method === 'GET' && request.headers.get('accept').includes('text/html'))) {
+    event.respondWith(
+      fetch(request)
+        .catch(() => {
+          // Check if it's a known route
+          if (ROUTES.some(route => url.pathname === route)) {
+            return caches.match('/index.html');
+          }
+          // Fallback to offline page
+          return caches.match('/offline.html');
+        })
+    );
+    return;
   }
-  // Strategy for static assets
-  else if (request.destination === 'image' || request.destination === 'style' || request.destination === 'script') {
-    event.respondWith(cacheFirstStrategy(request));
+
+  // Handle static assets
+  if (request.destination === 'style' || 
+      request.destination === 'script' || 
+      request.destination === 'image') {
+    event.respondWith(
+      caches.match(request)
+        .then((response) => {
+          if (response) {
+            return response;
+          }
+          return fetch(request)
+            .then((networkResponse) => {
+              const responseToCache = networkResponse.clone();
+              caches.open(DYNAMIC_CACHE)
+                .then((cache) => {
+                  cache.put(request, responseToCache);
+                });
+              return networkResponse;
+            })
+            .catch(() => {
+              // Return a fallback for images
+              if (request.destination === 'image') {
+                return caches.match('/icon-192.png');
+              }
+              return new Response('Not available offline');
+            });
+        })
+    );
+    return;
   }
-  // Strategy for HTML pages
-  else {
-    event.respondWith(staleWhileRevalidateStrategy(request));
-  }
+
+  // Default fetch behavior
+  event.respondWith(
+    fetch(request)
+      .catch(() => caches.match(request))
+  );
 });
 
-// Cache-first strategy
-async function cacheFirstStrategy(request) {
-  const cachedResponse = await caches.match(request);
-  if (cachedResponse) {
-    return cachedResponse;
-  }
-  try {
-    const networkResponse = await fetch(request);
-    const cache = await caches.open(DYNAMIC_CACHE);
-    cache.put(request, networkResponse.clone());
-    return networkResponse;
-  } catch (error) {
-    return new Response('Network error happened', {
-      status: 408,
-      headers: { 'Content-Type': 'text/plain' },
-    });
-  }
-}
+// Clean up old caches
+self.addEventListener('activate', (event) => {
+  event.waitUntil(
+    caches.keys()
+      .then((cacheNames) => {
+        return Promise.all(
+          cacheNames
+            .filter((cacheName) => {
+              return cacheName.startsWith('upi2qr-') && 
+                     cacheName !== CACHE_NAME && 
+                     cacheName !== DYNAMIC_CACHE;
+            })
+            .map((cacheName) => caches.delete(cacheName))
+        );
+      })
+  );
+});
 
-// Network-first strategy
-async function networkFirstStrategy(request) {
-  try {
-    const networkResponse = await fetch(request);
-    const cache = await caches.open(DYNAMIC_CACHE);
-    cache.put(request, networkResponse.clone());
-    return networkResponse;
-  } catch (error) {
-    const cachedResponse = await caches.match(request);
-    if (cachedResponse) {
-      return cachedResponse;
-    }
-    return new Response('Network error happened', {
-      status: 408,
-      headers: { 'Content-Type': 'text/plain' },
-    });
-  }
-}
-
-// Stale-while-revalidate strategy
-async function staleWhileRevalidateStrategy(request) {
-  const cachedResponse = await caches.match(request);
-  const networkResponsePromise = fetch(request).then(async (response) => {
-    const cache = await caches.open(DYNAMIC_CACHE);
-    cache.put(request, response.clone());
-    return response;
-  });
-  return cachedResponse || networkResponsePromise;
-}
-
-// Check for sync support
-const hasSyncSupport = 'sync' in ServiceWorkerRegistration.prototype;
-
-// Modified background sync
-if (hasSyncSupport) {
-  self.addEventListener('sync', (event) => {
-    if (event.tag === 'sync-payments') {
-      event.waitUntil(syncPayments());
-    }
-  });
-}
-
-// Periodic sync fallback for browsers without sync support
-self.addEventListener('periodicsync', (event) => {
-  if (event.tag === 'check-pending-payments') {
+// Background sync
+self.addEventListener('sync', (event) => {
+  if (event.tag === 'sync-payments') {
     event.waitUntil(syncPayments());
   }
 });
