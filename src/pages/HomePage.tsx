@@ -103,13 +103,6 @@ export default function HomePage() {
     };
   }, []);
 
-  // Stats tile data
-  const statsTiles = [
-    { value: "0₹", label: "Free Forever" },
-    { value: "5 Sec", label: "Setup Time" },
-    { value: "100%", label: "Secure" }
-  ];
-
   return (
     <div className="bg-background overflow-x-hidden w-full">
       {/* Hero Section */}
