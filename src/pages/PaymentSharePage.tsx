@@ -7,6 +7,7 @@ import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import html2canvas from 'html2canvas/dist/html2canvas.js';
 import { useState, useEffect } from 'react';
 import { useAnalytics } from '@/hooks/useAnalytics';
+import { SEO } from '@/components/SEO';
 
 // Add CTA variations
 const CTA_VARIATIONS = [
@@ -38,6 +39,9 @@ export default function PaymentSharePage() {
     amount: searchParams.get('amount') || '',
     description: searchParams.get('description') || ''
   };
+
+  const title = `Pay ${paymentData.name}${paymentData.amount ? ` - ₹${paymentData.amount}` : ''} | UPI2QR`;
+  const description = `Payment request from ${paymentData.name}${paymentData.amount ? ` for ₹${paymentData.amount}` : ''}${paymentData.description ? `: ${paymentData.description}` : ''}`;
 
   // Format number with commas
   const formatNumber = (num: string) => {
