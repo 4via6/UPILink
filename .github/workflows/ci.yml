@@ -80,13 +80,9 @@ jobs:
       - name: ArgoCD Sync with Strategy
         id: sync
         run: |
-          argocd app sync k3s \
-            --force \
-            --prune \
-            --retry-limit 3
-          
           echo "Starting sync for application..."
-          argocd app wait k3s --timeout 300
+          argocd app sync k3s --force --prune --retry-limit 3
+          argocd app wait k3s --timeout 600
 
       - name: Notify Slack on Success
         if: success()

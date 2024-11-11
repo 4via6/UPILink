@@ -6,6 +6,7 @@ import { Share2, Download, Smartphone, Code, Check, ExternalLink } from 'lucide-
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import html2canvas from 'html2canvas/dist/html2canvas.js';
 import { useState, useEffect } from 'react';
+import { useAnalytics } from '@/hooks/useAnalytics';
 
 // Add CTA variations
 const CTA_VARIATIONS = [
@@ -29,6 +30,7 @@ const CTA_VARIATIONS = [
 
 export default function PaymentSharePage() {
   const [searchParams] = useSearchParams();
+  const { trackEvent } = useAnalytics();
   
   const paymentData = {
     name: searchParams.get('name') || '',
@@ -49,6 +51,11 @@ export default function PaymentSharePage() {
 
   // Updated download handler
   const handleDownloadQR = async () => {
+    trackEvent(
+      'download_qr',
+      'download',
+      'Download QR code'
+    );
     // Get the card content without buttons
     const cardContent = document.getElementById('downloadable-card');
     
@@ -72,6 +79,11 @@ export default function PaymentSharePage() {
 
   // Enhanced share functionality
   const handleShare = async () => {
+    trackEvent(
+      'share_payment',
+      'sharing',
+      'Share payment page'
+    );
     const shareUrl = window.location.href;
     const shareData = {
       title: `Pay ${paymentData.name}`,

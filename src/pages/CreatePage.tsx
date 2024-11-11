@@ -8,6 +8,7 @@ import { useNavigate } from 'react-router-dom';
 import { usePaymentHistory } from '@/hooks/usePaymentHistory';
 import { PaymentHistorySection } from '@/components/PaymentHistorySection';
 import { PaymentHistory } from '@/types/payment';
+import { useAnalytics } from '@/hooks/useAnalytics';
 
 // Updated UPI App configurations
 const UPI_APPS = [
@@ -30,9 +31,17 @@ export default function CreatePage() {
     amount: '',
     description: ''
   });
+  const { trackEvent } = useAnalytics();
 
   // Handle UPI app selection with toggle functionality
   const handleUpiAppSelect = (handle: string) => {
+    // Track UPI app selection
+    trackEvent(
+      'select_upi_app',
+      'interaction',
+      handle
+    );
+
     // If clicking the same handle again, deselect it
     if (handle === formData.upiHandle) {
       setFormData({
@@ -73,6 +82,14 @@ export default function CreatePage() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Track form submission
+    trackEvent(
+      'create_payment_page',
+      'payment',
+      `Created by ${formData.name}`,
+      formData.amount ? parseFloat(formData.amount) : undefined
+    );
+
     const params = new URLSearchParams({
       name: formData.name,
       upiId: formData.upiId,

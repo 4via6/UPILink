@@ -5,10 +5,14 @@ import CreatePage from '@/pages/CreatePage';
 import PaymentSharePage from '@/pages/PaymentSharePage';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
+import { useAnalytics } from '@/hooks/useAnalytics';
 
 function App() {
   const location = useLocation();
   const isPaymentPage = location.pathname === '/pay';
+
+  // Initialize analytics
+  useAnalytics();
 
   // Update title based on route
   useEffect(() => {
