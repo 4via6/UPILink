@@ -6,8 +6,6 @@ import PaymentSharePage from '@/pages/PaymentSharePage';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { useAnalytics } from '@/hooks/useAnalytics';
-import { Toaster } from 'sonner';
-import { toast } from 'sonner';
 import { checkConnectivity } from '@/utils/offline';
 
 function App() {
@@ -17,30 +15,34 @@ function App() {
   // Initialize analytics
   useAnalytics();
 
+  // Handle online/offline silently
   useEffect(() => {
     const cleanup = checkConnectivity(
-      () => toast.success('Back online!'),
-      () => toast.error('You are offline')
+      // Online callback - silent refresh if needed
+      () => {
+        if (document.visibilityState === 'visible') {
+          window.location.reload();
+        }
+      },
+      // Offline callback - no notification needed
+      () => {}
     );
 
     return cleanup;
   }, []);
 
   return (
-    <>
-      <Toaster richColors position="top-center" />
-      <div className="min-h-screen flex flex-col">
-        {!isPaymentPage && <Header />}
-        <main className="flex-1">
-          <Routes>
-            <Route path="/" element={<HomePage />} />
-            <Route path="/create" element={<CreatePage />} />
-            <Route path="/pay" element={<PaymentSharePage />} />
-          </Routes>
-        </main>
-        {!isPaymentPage && <Footer />}
-      </div>
-    </>
+    <div className="min-h-screen flex flex-col">
+      {!isPaymentPage && <Header />}
+      <main className="flex-1">
+        <Routes>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/create" element={<CreatePage />} />
+          <Route path="/pay" element={<PaymentSharePage />} />
+        </Routes>
+      </main>
+      {!isPaymentPage && <Footer />}
+    </div>
   );
 }
 

@@ -11,6 +11,12 @@ const STATIC_ASSETS = [
   '/preview.png'
 ];
 
+const NAVIGATION_ROUTES = [
+  '/',
+  '/create',
+  '/pay'
+];
+
 // Install event
 self.addEventListener('install', (event) => {
   console.log('Service Worker installing.');
@@ -52,9 +58,27 @@ self.addEventListener('activate', (event) => {
 // Fetch event
 self.addEventListener('fetch', (event) => {
   const { request } = event;
+  const url = new URL(request.url);
 
-  // Skip cross-origin requests
-  if (!request.url.startsWith(self.location.origin)) {
+  // Handle navigation requests
+  if (request.mode === 'navigate') {
+    event.respondWith(
+      fetch(request)
+        .catch(() => {
+          // If it's a known route, serve the index.html
+          if (NAVIGATION_ROUTES.includes(url.pathname)) {
+            return caches.match('/index.html')
+              .then(response => {
+                if (response) {
+                  return response;
+                }
+                return caches.match('/offline.html');
+              });
+          }
+          // Otherwise, show offline page
+          return caches.match('/offline.html');
+        })
+    );
     return;
   }
 

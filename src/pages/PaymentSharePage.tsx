@@ -1,4 +1,4 @@
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { QRCodeSVG } from 'qrcode.react';
 import { Button } from '@/components/ui/button';
@@ -10,6 +10,7 @@ import { useAnalytics } from '@/hooks/useAnalytics';
 import { SEO } from '@/components/SEO';
 import { addPendingPayment } from '@/utils/db';
 import { toast } from 'sonner';
+import { isOffline } from '@/utils/offline';
 
 // Add CTA variations
 const CTA_VARIATIONS = [
@@ -34,7 +35,8 @@ const CTA_VARIATIONS = [
 export default function PaymentSharePage() {
   const [searchParams] = useSearchParams();
   const { trackEvent } = useAnalytics();
-  
+  const navigate = useNavigate();
+
   const paymentData = {
     name: searchParams.get('name') || '',
     upiId: searchParams.get('upiId') || '',
@@ -221,6 +223,11 @@ export default function PaymentSharePage() {
     return () => window.removeEventListener('online', handleOnline);
   }, []);
 
+  const handleCreateNewPayment = () => {
+    // Always navigate to create page, whether online or offline
+    navigate('/create');
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4 sm:p-6">
       <Card className="w-full max-w-md">
@@ -361,18 +368,14 @@ export default function PaymentSharePage() {
           )}
         </CardContent>
 
-        <CardFooter className="flex flex-col gap-3 sm:gap-4 border-t bg-gray-50/50 mt-4 sm:mt-6 py-4 sm:py-6">
-          <Button 
-            variant="outline" 
-            className="w-full hover:bg-primary hover:text-primary-foreground transition-colors h-auto py-2.5"
-            onClick={() => window.location.href = '/create'}
+        <CardFooter className="flex flex-col gap-4">
+          <Button
+            variant="outline"
+            className="w-full"
+            onClick={handleCreateNewPayment}
           >
-            <ExternalLink className="w-4 h-4 mr-2" />
-            <span className="text-sm whitespace-nowrap">{randomCTA.title}</span>
+            Create Payment Page
           </Button>
-          <p className="text-xs text-center text-muted-foreground">
-            {randomCTA.description}
-          </p>
         </CardFooter>
       </Card>
     </div>

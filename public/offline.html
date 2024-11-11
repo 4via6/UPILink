@@ -47,10 +47,22 @@
 <body>
     <div class="container">
         <h1>You're Offline</h1>
-        <p>Please check your internet connection and try again.</p>
-        <a href="/" class="button">Retry</a>
+        <p>You can still use the app in offline mode.</p>
+        <div class="buttons">
+            <a href="/" class="button">Go to Home</a>
+            <a href="/create" class="button" style="margin-left: 1rem;">Create Payment</a>
+        </div>
     </div>
     <script>
+        // Handle navigation in offline mode
+        document.querySelectorAll('a').forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const path = link.getAttribute('href');
+                window.location.href = path;
+            });
+        });
+
         // Check when we're back online
         window.addEventListener('online', () => {
             window.location.reload();
