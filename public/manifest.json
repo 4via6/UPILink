@@ -31,10 +31,18 @@
   ],
   "screenshots": [
     {
-      "src": "/preview.png",
-      "sizes": "1200x630",
+      "src": "/splash-1125x2436.png",
+      "sizes": "1125x2436",
       "type": "image/png",
-      "form_factor": "wide"
+      "platform": "narrow",
+      "label": "UPI2QR on iPhone X"
+    },
+    {
+      "src": "/splash-2048x2732.png",
+      "sizes": "2048x2732",
+      "type": "image/png",
+      "platform": "wide",
+      "label": "UPI2QR on iPad Pro"
     }
   ]
 } 

@@ -14,22 +14,16 @@ import { isOffline } from '@/utils/offline';
 
 // Add CTA variations
 const CTA_VARIATIONS = [
-  {
-    title: "Create Your Own Payment Page",
-    description: "Start accepting UPI payments in seconds"
-  },
-  {
-    title: "Need Your Own Payment Link?",
-    description: "Create your personalized UPI payment page instantly"
-  },
-  {
-    title: "Want to Accept UPI Payments?",
-    description: "Generate your payment page in one click"
-  },
-  {
-    title: "Create Payment Page",
-    description: "Get your own UPI payment link & QR code"
-  }
+  "Create Your Own Payment Link",
+  "Start Accepting Payments",
+  "Your Turn to Create One",
+  "Make Money Move Faster",
+  "Get Your Payment Link Now",
+  "Join the Digital Payment Era",
+  "Create Your Payment Magic",
+  "Time to Get Paid Smarter",
+  "Simplify Your Payments",
+  "Level Up Your Payment Game"
 ];
 
 export default function PaymentSharePage() {
@@ -119,7 +113,9 @@ export default function PaymentSharePage() {
   };
 
   // Get random CTA variation
-  const randomCTA = CTA_VARIATIONS[Math.floor(Math.random() * CTA_VARIATIONS.length)];
+  const [ctaText] = useState(() => 
+    CTA_VARIATIONS[Math.floor(Math.random() * CTA_VARIATIONS.length)]
+  );
 
   // Handle embed code copy
   const handleCopyEmbed = async (size: 'small' | 'medium' | 'large') => {
@@ -224,7 +220,6 @@ export default function PaymentSharePage() {
   }, []);
 
   const handleCreateNewPayment = () => {
-    // Always navigate to create page, whether online or offline
     navigate('/create');
   };
 
@@ -371,10 +366,10 @@ export default function PaymentSharePage() {
         <CardFooter className="flex flex-col gap-4">
           <Button
             variant="outline"
-            className="w-full"
+            className="w-full hover:bg-primary/5 transition-colors duration-200"
             onClick={handleCreateNewPayment}
           >
-            Create Payment Page
+            {ctaText}
           </Button>
         </CardFooter>
       </Card>
