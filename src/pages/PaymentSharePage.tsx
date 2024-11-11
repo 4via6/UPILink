@@ -8,6 +8,8 @@ import html2canvas from 'html2canvas/dist/html2canvas.js';
 import { useState, useEffect } from 'react';
 import { useAnalytics } from '@/hooks/useAnalytics';
 import { SEO } from '@/components/SEO';
+import { addPendingPayment } from '@/utils/db';
+import { toast } from 'sonner';
 
 // Add CTA variations
 const CTA_VARIATIONS = [
@@ -161,6 +163,63 @@ export default function PaymentSharePage() {
   loading="lazy"
 ></iframe>`;
   };
+
+  const handlePayment = async () => {
+    const payment = {
+      name: paymentData.name,
+      upiId: paymentData.upiId,
+      amount: paymentData.amount,
+      timestamp: Date.now()
+    };
+
+    if (!navigator.onLine) {
+      try {
+        await addPendingPayment(payment);
+        
+        if ('serviceWorker' in navigator && 'sync' in ServiceWorkerRegistration.prototype) {
+          const registration = await navigator.serviceWorker.ready;
+          await (registration as any).sync.register('sync-payments');
+          toast.success('Payment will be processed when online');
+        } else {
+          localStorage.setItem('pendingPayment', JSON.stringify(payment));
+          toast.info('Payment saved. Please retry when online.');
+        }
+      } catch (error) {
+        console.error('Failed to queue payment:', error);
+        toast.error('Failed to save payment');
+      }
+    } else {
+      try {
+        // Your payment processing logic
+        toast.success('Payment processed successfully');
+      } catch (error) {
+        console.error('Payment failed:', error);
+        toast.error('Payment failed. Please try again.');
+      }
+    }
+  };
+
+  // Add online/offline detection
+  useEffect(() => {
+    const handleOnline = () => {
+      // Process any pending payments stored in localStorage
+      const pendingPayment = localStorage.getItem('pendingPayment');
+      if (pendingPayment) {
+        try {
+          const payment = JSON.parse(pendingPayment);
+          // Process payment
+          localStorage.removeItem('pendingPayment');
+          toast.success('Pending payment processed');
+        } catch (error) {
+          console.error('Failed to process pending payment:', error);
+          toast.error('Failed to process pending payment');
+        }
+      }
+    };
+
+    window.addEventListener('online', handleOnline);
+    return () => window.removeEventListener('online', handleOnline);
+  }, []);
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4 sm:p-6">

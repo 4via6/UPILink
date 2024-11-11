@@ -69,7 +69,7 @@ export default function HomePage() {
   ];
 
   const handleMouseEnter = () => {
-    const scrollingElement = document.querySelector('.animate-scroll');
+    const scrollingElement = document.querySelector('.animate-scroll') as HTMLElement;
     if (scrollingElement) {
       // Get the current transform value
       const computedStyle = window.getComputedStyle(scrollingElement);
@@ -83,7 +83,7 @@ export default function HomePage() {
   };
 
   const handleMouseLeave = () => {
-    const scrollingElement = document.querySelector('.animate-scroll');
+    const scrollingElement = document.querySelector('.animate-scroll') as HTMLElement;
     if (scrollingElement) {
       // Remove the inline styles to resume animation
       scrollingElement.style.transform = '';
