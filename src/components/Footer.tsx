@@ -15,7 +15,7 @@ export function Footer() {
             </a>
           </div>
           <div className="text-[10px] sm:text-xs text-center">
-            © {new Date().getFullYear()} UPI PayLink. All rights reserved.
+            © {new Date().getFullYear()} UPI2QR. All rights reserved.
           </div>
         </div>
       </div>

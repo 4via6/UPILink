@@ -1,6 +1,6 @@
 {
-  "name": "UPI Link - Create Payment Pages",
-  "short_name": "UPI Link",
+  "name": "UPI2QR - Create Payment Pages",
+  "short_name": "UPI2QR",
   "description": "Create UPI payment pages instantly",
   "start_url": "/",
   "display": "standalone",

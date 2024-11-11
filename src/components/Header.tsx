@@ -7,7 +7,8 @@ export function Header() {
     <header className="border-b">
       <div className="container mx-auto px-4 h-14 sm:h-16 flex items-center justify-between">
         <Link to="/" className="font-bold text-lg sm:text-xl">
-          UPI<span className="text-primary">Link</span>
+          <span className="font-bold">UPI</span>
+          <span className="font-normal">2QR</span>
         </Link>
         
         <nav className="flex items-center gap-2 sm:gap-4">

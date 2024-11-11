@@ -111,7 +111,7 @@ export default function HomePage() {
   ];
 
   return (
-    <div className="bg-background">
+    <div className="bg-background overflow-x-hidden w-full">
       {/* Hero Section */}
       <motion.div 
         initial={{ opacity: 0, y: 20 }}
@@ -135,112 +135,88 @@ export default function HomePage() {
           <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
         </Button>
 
-        {/* Enhanced Hero Illustration Section */}
-        <motion.div 
-          initial={{ opacity: 1, backgroundColor: "rgb(255, 255, 255)" }}
-          className="mt-12 sm:mt-16 max-w-5xl mx-auto relative"
-        >
-          {/* Background Elements */}
-          <motion.div 
-            initial={{ opacity: 1, backgroundColor: "rgb(255, 255, 255)" }}
-            className="absolute inset-0 bg-gradient-to-r from-primary/5 via-transparent to-primary/5 rounded-3xl" 
-          />
-          <motion.div 
-            initial={{ opacity: 0.2 }}
-            className="absolute -inset-0.5 bg-gradient-to-r from-primary/10 to-primary/10 blur-2xl opacity-20" 
-          />
+        {/* Enhanced Hero Illustration Section with Fixed Bleeding */}
+        <div className="mt-12 sm:mt-16 mx-auto relative">
+          {/* Container to prevent bleeding */}
+          <div className="absolute inset-0 -mx-4 bg-background" /> {/* Background fix */}
 
-          {/* Main Content Container */}
-          <motion.div 
-            initial={{ backgroundColor: "rgb(255, 255, 255)" }}
-            className="relative bg-white/50 backdrop-blur-sm rounded-3xl p-6 sm:p-8 shadow-xl"
-          >
-            {/* Stats Bar */}
-            <div className="relative mb-6 sm:mb-8">
-              {/* Scrollable Container */}
-              <div 
-                ref={scrollRef}
-                className="flex sm:grid sm:grid-cols-3 gap-3 overflow-x-auto pb-4 sm:pb-0 px-4 sm:px-0 no-scrollbar"
+          <div className="relative max-w-5xl mx-auto">
+            {/* Background Elements */}
+            <div className="absolute inset-0 bg-gradient-to-r from-primary/10 via-transparent to-primary/10 rounded-3xl" />
+            <div className="absolute -inset-0.5 bg-gradient-to-r from-primary/20 to-primary/20 blur-2xl opacity-10" />
+
+            {/* Main Content Container */}
+            <div className="relative bg-white/80 backdrop-blur-sm rounded-3xl p-6 sm:p-8 shadow-xl border border-primary/10">
+              {/* Stats Bar */}
+              <div className="grid grid-cols-3 gap-3 sm:gap-4 mb-6 sm:mb-8">
+                <div className="p-3 sm:p-4 rounded-2xl bg-white shadow-[0_2px_8px_-3px_rgba(0,0,0,0.1)] border border-gray-100">
+                  <h4 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900">100%</h4>
+                  <p className="text-xs sm:text-sm text-gray-500">Secure</p>
+                </div>
+                <div className="p-3 sm:p-4 rounded-2xl bg-white shadow-[0_2px_8px_-3px_rgba(0,0,0,0.1)] border border-gray-100">
+                  <h4 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900">0₹</h4>
+                  <p className="text-xs sm:text-sm text-gray-500">Free Forever</p>
+                </div>
+                <div className="p-3 sm:p-4 rounded-2xl bg-white shadow-[0_2px_8px_-3px_rgba(0,0,0,0.1)] border border-gray-100">
+                  <h4 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900">5 Sec</h4>
+                  <p className="text-xs sm:text-sm text-gray-500">Setup Time</p>
+                </div>
+              </div>
+
+              {/* Illustration Container */}
+              <motion.div 
+                initial={{ opacity: 0 }}
+                animate={{ opacity: isImagesLoaded ? 1 : 0 }}
+                transition={{ duration: 0.5 }}
+                className="relative bg-white rounded-2xl p-4 shadow-sm border border-gray-100"
               >
-                {/* First set of tiles */}
-                {statsTiles.map((stat, index) => (
-                  <motion.div 
-                    key={`tile-1-${index}`}
-                    initial={{ backgroundColor: "rgb(249, 250, 251)" }}
-                    className="flex-shrink-0 w-[150px] sm:w-auto p-4 rounded-3xl bg-gray-50 shadow-[0_2px_10px_-3px_rgba(0,0,0,0.07)] hover:shadow-[0_2px_15px_-3px_rgba(0,0,0,0.1)] transition-all duration-300"
-                  >
-                    <h4 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 mb-0.5">{stat.value}</h4>
-                    <p className="text-xs sm:text-sm text-gray-500">{stat.label}</p>
-                  </motion.div>
-                ))}
-                
-                {/* Duplicate set for infinite scroll (only shown on mobile) */}
-                {statsTiles.map((stat, index) => (
-                  <motion.div 
-                    key={`tile-2-${index}`}
-                    initial={{ backgroundColor: "rgb(249, 250, 251)" }}
-                    className="flex-shrink-0 w-[150px] sm:hidden p-4 rounded-3xl bg-gray-50 shadow-[0_2px_10px_-3px_rgba(0,0,0,0.07)] hover:shadow-[0_2px_15px_-3px_rgba(0,0,0,0.1)] transition-all duration-300"
-                  >
-                    <h4 className="text-xl font-bold text-gray-900 mb-0.5">{stat.value}</h4>
-                    <p className="text-xs text-gray-500">{stat.label}</p>
-                  </motion.div>
-                ))}
-              </div>
-            </div>
+                {/* Main Illustration */}
+                <div className="relative h-[200px] sm:h-[300px] md:h-[400px] overflow-hidden rounded-lg">
+                  {illustrations.map((src, index) => (
+                    <motion.div
+                      key={src}
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ 
+                        opacity: currentImageIndex === index ? 1 : 0,
+                        scale: currentImageIndex === index ? 1 : 0.95,
+                        zIndex: currentImageIndex === index ? 1 : 0
+                      }}
+                      transition={{ 
+                        type: "spring",
+                        stiffness: 80,
+                        damping: 20
+                      }}
+                      className="absolute inset-0 flex items-center justify-center p-4"
+                    >
+                      <img 
+                        src={src}
+                        alt={`Illustration ${index + 1}`}
+                        className="w-full h-full object-contain"
+                        loading={index === 0 ? "eager" : "lazy"}
+                      />
+                    </motion.div>
+                  ))}
+                </div>
 
-            {/* Illustration Container */}
-            <motion.div 
-              initial={{ opacity: 1 }}
-              animate={{ opacity: isImagesLoaded ? 1 : 1 }}
-              transition={{ duration: 0.3 }}
-              className="relative"
-            >
-              {/* Main Illustration */}
-              <div className="relative h-[200px] sm:h-[300px] md:h-[400px] overflow-hidden rounded-lg">
-                {illustrations.map((src, index) => (
-                  <motion.div
-                    key={src}
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ 
-                      opacity: currentImageIndex === index ? 1 : 0,
-                      scale: currentImageIndex === index ? 1 : 0.95,
-                      zIndex: currentImageIndex === index ? 1 : 0
-                    }}
-                    transition={{ 
-                      type: "spring",
-                      stiffness: 80,
-                      damping: 20
-                    }}
-                    className="absolute inset-0 flex items-center justify-center p-4"
-                  >
-                    <img 
-                      src={src}
-                      alt={`Illustration ${index + 1}`}
-                      className="w-full h-full object-contain"
-                      loading={index === 0 ? "eager" : "lazy"}
+                {/* Navigation Dots */}
+                <div className="flex justify-center gap-2 mt-4">
+                  {illustrations.map((_, index) => (
+                    <button
+                      key={index}
+                      onClick={() => setCurrentImageIndex(index)}
+                      className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                        currentImageIndex === index 
+                          ? 'w-6 bg-primary' 
+                          : 'bg-primary/30 hover:bg-primary/50'
+                      }`}
+                      aria-label={`Go to illustration ${index + 1}`}
                     />
-                  </motion.div>
-                ))}
-              </div>
-
-              {/* Navigation Dots */}
-              <div className="flex justify-center gap-2 mt-6">
-                {illustrations.map((_, index) => (
-                  <button
-                    key={index}
-                    onClick={() => setCurrentImageIndex(index)}
-                    className={`w-2 h-2 rounded-full transition-all duration-300 ${
-                      currentImageIndex === index 
-                        ? 'w-6 bg-primary' 
-                        : 'bg-primary/30 hover:bg-primary/50'
-                    }`}
-                    aria-label={`Go to illustration ${index + 1}`}
-                  />
-                ))}
-              </div>
-            </motion.div>
-          </motion.div>
-        </motion.div>
+                  ))}
+                </div>
+              </motion.div>
+            </div>
+          </div>
+        </div>
       </motion.div>
 
       {/* Features Section with better mobile layout */}
@@ -335,7 +311,7 @@ export default function HomePage() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="container mx-auto px-4 py-20"
+        className="container mx-auto px-4 py-20 overflow-hidden"
       >
         <div className="relative max-w-5xl mx-auto">
           {/* Background Elements */}

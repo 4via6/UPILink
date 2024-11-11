@@ -165,11 +165,11 @@ export default function CreatePage() {
                 ))}
               </div>
 
-              {/* UPI ID Input Field */}
+              {/* UPI ID Input Field with Updated Placeholder */}
               <div className="relative">
                 <Input
                   id="upiId"
-                  placeholder={formData.upiHandle ? "Enter your UPI ID" : "Enter complete UPI ID (with @handle)"}
+                  placeholder={formData.upiHandle ? "Enter UPI ID" : "Enter UPI ID with @handle"}
                   value={formData.upiHandle ? formData.upiId.split('@')[0] : formData.upiId}
                   onChange={(e) => handleUpiIdChange(e.target.value)}
                   required
@@ -185,8 +185,8 @@ export default function CreatePage() {
               <p className="text-sm text-muted-foreground flex items-center gap-1 mt-2">
                 <AlertCircle className="h-4 w-4" />
                 {formData.upiHandle 
-                  ? "Enter your UPI ID or click selected app again to enter custom UPI ID" 
-                  : "Select a UPI app or enter complete UPI ID including @handle"}
+                  ? "Enter your UPI ID" 
+                  : "Select UPI app or enter complete UPI ID"}
               </p>
             </div>
 
