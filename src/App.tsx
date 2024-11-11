@@ -7,6 +7,8 @@ import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { useAnalytics } from '@/hooks/useAnalytics';
 import { Toaster } from 'sonner';
+import { toast } from 'sonner';
+import { checkConnectivity } from '@/utils/offline';
 
 function App() {
   const location = useLocation();
@@ -14,6 +16,15 @@ function App() {
 
   // Initialize analytics
   useAnalytics();
+
+  useEffect(() => {
+    const cleanup = checkConnectivity(
+      () => toast.success('Back online!'),
+      () => toast.error('You are offline')
+    );
+
+    return cleanup;
+  }, []);
 
   return (
     <>
