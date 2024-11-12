@@ -1,4 +1,4 @@
-import { ArrowRight, Zap, Shield, Share2, CheckCircle2, Sparkles, Globe, Clock, Users } from 'lucide-react';
+import { ArrowRight, Zap, Shield, Share2, CheckCircle2, Sparkles, Globe, Clock, Users, Wifi, WifiOff, Smartphone } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -362,6 +362,39 @@ export default function HomePage() {
             </div>
           </div>
         </motion.div>
+
+        {/* PWA Feature Section */}
+        <div className="container mx-auto px-4 py-12 sm:py-16">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5 }}
+            className="max-w-md mx-auto text-center"
+          >
+            <div className="flex justify-center gap-3 mb-4">
+              <div className="p-2 rounded-full bg-primary/10">
+                <Smartphone className="h-6 w-6 text-primary" />
+              </div>
+              <div className="p-2 rounded-full bg-primary/10">
+                <WifiOff className="h-6 w-6 text-primary" />
+              </div>
+            </div>
+            
+            <h2 className="text-xl sm:text-2xl font-bold mb-3">
+              Works Offline
+            </h2>
+            
+            <p className="text-sm sm:text-base text-muted-foreground mb-4">
+              Install UPI2QR on your device and use it anytime, even without internet. Create payment pages seamlessly in offline mode.
+            </p>
+
+            <div className="inline-flex items-center gap-2 text-sm text-primary bg-primary/5 px-4 py-2 rounded-full">
+              <Smartphone className="h-4 w-4" />
+              <span>Install app to use offline</span>
+            </div>
+          </motion.div>
+        </div>
       </div>
     </>
   );
