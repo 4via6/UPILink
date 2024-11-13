@@ -68,6 +68,7 @@ interface UpiAppSelectorProps {
 
 export function UpiAppSelector({ open, onClose, paymentData }: UpiAppSelectorProps) {
   const [isRedirecting, setIsRedirecting] = useState(false);
+  const [selectedApp, setSelectedApp] = useState<string | null>(null);
   const [isMobile, setIsMobile] = useState(false);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
 
@@ -133,6 +134,7 @@ export function UpiAppSelector({ open, onClose, paymentData }: UpiAppSelectorPro
     }
 
     setIsRedirecting(true);
+    setSelectedApp(app.package);
 
     try {
       // Construct UPI parameters based on app
@@ -170,119 +172,161 @@ export function UpiAppSelector({ open, onClose, paymentData }: UpiAppSelectorPro
         const intentUrl = `intent://${appUrl.replace(/^[^:]+:\/\//, '')}#Intent;scheme=${
           app.name === 'Google Pay' ? 'tez' : app.scheme.split(':')[0]
         };package=${app.package};end`;
-        window.location.href = intentUrl;
+        setTimeout(() => {
+          window.location.href = intentUrl;
+        }, 500); // Small delay before redirect
       } else {
         // For iOS: Use direct URL scheme
-        const link = document.createElement('a');
-        link.href = appUrl;
-        link.rel = 'noopener noreferrer';
-        link.click();
+        setTimeout(() => {
+          const link = document.createElement('a');
+          link.href = appUrl;
+          link.rel = 'noopener noreferrer';
+          link.click();
+        }, 500);
       }
 
-      // Reset state and close dialog after a delay
+      // Remove the automatic closing
       setTimeout(() => {
         setIsRedirecting(false);
-        onClose();
-      }, 1000);
+        setSelectedApp(null);
+      }, 5000);
 
     } catch (error) {
       console.error('Error opening UPI app:', error);
       setIsRedirecting(false);
+      setSelectedApp(null);
     }
   };
 
   return (
-    <Dialog open={open} onOpenChange={(isOpen) => {
-      if (!isRedirecting) {
-        onClose();
-      }
-    }}>
-      <DialogContent className="max-w-[95vw] w-[400px] rounded-xl p-0 gap-0 border-0 shadow-lg overflow-hidden">
-        <DialogHeader className="p-4 sm:p-6 border-b bg-card">
-          <DialogTitle className="text-lg font-semibold">Select Payment App</DialogTitle>
-          <p className="text-sm text-muted-foreground mt-1">
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent className="max-w-[95vw] w-[400px] rounded-xl p-0 gap-0 border-0 shadow-xl overflow-hidden bg-background">
+        <DialogHeader className="p-5 border-b bg-card/50 space-y-2">
+          <DialogTitle className="text-xl font-semibold tracking-tight flex items-center justify-between">
+            Select Payment App
+            {selectedApp && !isRedirecting && (
+              <span className="text-xs text-muted-foreground font-normal">
+                Click × to close
+              </span>
+            )}
+          </DialogTitle>
+          <p className="text-sm text-muted-foreground leading-relaxed">
             {!isOnline 
               ? "You're currently offline. Payment will be saved for later."
               : isMobile 
-                ? "Choose your preferred UPI app to complete the payment"
+                ? selectedApp 
+                  ? "App opened. You can close this window after completing the payment."
+                  : "Choose your preferred UPI app to complete the payment"
                 : "UPI app payments are only available on mobile devices"}
           </p>
         </DialogHeader>
 
-        <div className="p-4 sm:p-6 bg-background">
+        <div className="px-4 pt-4 pb-5 sm:p-5 bg-background">
           {!isOnline ? (
             // Offline View
-            <div className="py-6 text-center">
-              <div className="flex justify-center mb-4">
-                <WifiOff className="h-12 w-12 text-muted-foreground" />
+            <div className="py-8 text-center">
+              <div className="flex justify-center mb-5">
+                <div className="p-3 rounded-full bg-muted">
+                  <WifiOff className="h-8 w-8 text-muted-foreground" />
+                </div>
               </div>
               <h3 className="text-lg font-medium mb-2">You're Offline</h3>
-              <p className="text-sm text-muted-foreground mb-4">
+              <p className="text-sm text-muted-foreground mb-6 max-w-[280px] mx-auto">
                 Your payment will be saved and processed automatically when you're back online.
               </p>
               <Button 
                 onClick={handleOfflinePayment}
-                className="w-full"
+                className="w-full max-w-[200px]"
               >
                 Save Payment for Later
               </Button>
             </div>
           ) : isMobile ? (
             // Mobile Online View - App Selection Grid
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
               {UPI_APPS.map((app) => (
                 <Button
                   key={app.package}
                   variant="outline"
                   disabled={isRedirecting}
                   className={`
-                    relative h-auto py-4 px-2 flex flex-col items-center justify-center gap-2
-                    border border-input bg-background
+                    relative h-auto py-5 px-3 flex flex-col items-center justify-center gap-3
+                    border border-input/50 bg-card/50
                     hover:bg-accent hover:border-accent
                     active:scale-[0.98] transition-all duration-200
-                    ${isRedirecting ? 'opacity-50 cursor-not-allowed' : ''}
+                    disabled:opacity-50 disabled:cursor-not-allowed
+                    group
+                    ${selectedApp === app.package ? 'ring-2 ring-primary ring-offset-2 bg-accent' : ''}
                   `}
                   onClick={() => handleAppClick(app)}
                 >
-                  {/* App Icon */}
+                  {/* App Icon with enhanced hover and selection effect */}
                   <div 
-                    className="w-12 h-12 sm:w-14 sm:h-14 flex items-center justify-center transition-transform duration-200"
+                    className={`
+                      w-12 h-12 sm:w-14 sm:h-14 flex items-center justify-center 
+                      transition-all duration-200 
+                      ${selectedApp === app.package ? 'scale-110' : 'group-hover:scale-105'}
+                    `}
                   >
                     <img 
                       src={app.icon} 
                       alt={`${app.name} icon`}
-                      className="w-full h-full object-contain"
+                      className="w-full h-full object-contain drop-shadow-sm"
                       loading="lazy"
                     />
                   </div>
                   
-                  {/* App name */}
-                  <span className="text-xs sm:text-sm font-medium text-center text-foreground">
+                  {/* App name with selection state */}
+                  <span className={`
+                    text-xs sm:text-sm font-medium text-center
+                    transition-colors duration-200
+                    ${selectedApp === app.package 
+                      ? 'text-primary font-semibold' 
+                      : 'text-foreground/90 group-hover:text-foreground'}
+                  `}>
                     {app.name}
                   </span>
+
+                  {/* Loading indicator when selected */}
+                  {selectedApp === app.package && (
+                    <div className="absolute inset-0 bg-background/50 flex items-center justify-center rounded-lg">
+                      <div className="animate-pulse text-xs text-primary font-medium">
+                        Opening {app.name}...
+                      </div>
+                    </div>
+                  )}
                 </Button>
               ))}
             </div>
           ) : (
             // Desktop View
-            <div className="py-6 text-center">
-              <div className="flex justify-center mb-4">
-                <Smartphone className="h-12 w-12 text-muted-foreground" />
+            <div className="py-8 text-center">
+              <div className="flex justify-center mb-5">
+                <div className="p-3 rounded-full bg-muted">
+                  <Smartphone className="h-8 w-8 text-muted-foreground" />
+                </div>
               </div>
               <h3 className="text-lg font-medium mb-2">Mobile Only Feature</h3>
-              <p className="text-sm text-muted-foreground mb-4">
+              <p className="text-sm text-muted-foreground mb-4 max-w-[280px] mx-auto">
                 Please scan the QR code or open this page on your mobile device to use UPI apps.
               </p>
             </div>
           )}
           
-          {/* Payment details summary */}
-          <div className="mt-4 p-3 bg-muted rounded-lg text-sm space-y-1">
-            <p className="font-medium">Payment Details:</p>
-            <p className="text-muted-foreground">
-              To: {paymentData.name}
-              {paymentData.amount && ` • ₹${paymentData.amount}`}
-            </p>
+          {/* Payment details summary with improved styling */}
+          <div className="mt-5 p-4 bg-muted/50 rounded-lg text-sm space-y-2 border border-input/10">
+            <div className="flex items-center justify-between">
+              <p className="font-medium text-foreground/80">Payment Details</p>
+              <span className="text-xs text-muted-foreground">UPI Payment</span>
+            </div>
+            <div className="flex items-center justify-between text-muted-foreground">
+              <span>To: {paymentData.name}</span>
+              {paymentData.amount && (
+                <span className="font-medium text-foreground">
+                  ₹{paymentData.amount}
+                </span>
+              )}
+            </div>
           </div>
         </div>
       </DialogContent>
