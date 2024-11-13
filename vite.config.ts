@@ -15,12 +15,14 @@ export default defineConfig({
         'app-icons/*.svg',
         'icon-*.png',
         'splash-*.png',
-        'offline.html'
+        'offline.html',
+        'index.html'
       ],
       workbox: {
         globPatterns: [
           '**/*.{js,css,html,ico,png,svg,json,woff2}',
-          'app-icons/*.svg'
+          'app-icons/*.svg',
+          'index.html'
         ],
         navigateFallback: '/index.html',
         navigateFallbackAllowlist: [/^\/$/],
@@ -96,49 +98,15 @@ export default defineConfig({
               networkTimeoutSeconds: 10,
               cacheableResponse: {
                 statuses: [0, 200]
-              },
-              broadcastUpdate: {
-                channelName: 'api-updates'
               }
             }
           }
         ],
-        // Important for form handling
         skipWaiting: true,
         clientsClaim: true,
         cleanupOutdatedCaches: true,
-        // Enable form submissions in offline mode
-        offlineGoogleAnalytics: true,
-        // Handle form submissions
-        cacheableResponse: {
-          statuses: [0, 200]
-        },
-        // Cache HTML for offline access
-        precache: ['/index.html'],
-        // Cache routes
-        routes: [
-          {
-            urlPattern: '/',
-            handler: 'NetworkFirst',
-            options: {
-              cacheName: 'start-url'
-            }
-          },
-          {
-            urlPattern: '/create',
-            handler: 'NetworkFirst',
-            options: {
-              cacheName: 'create-page'
-            }
-          },
-          {
-            urlPattern: '/pay',
-            handler: 'NetworkFirst',
-            options: {
-              cacheName: 'payment-page'
-            }
-          }
-        ]
+        navigationPreload: true,
+        sourcemap: true
       },
       manifest: {
         name: 'UPI2QR - Create Payment Pages',
