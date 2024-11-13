@@ -22,6 +22,8 @@ export default defineConfig({
           '**/*.{js,css,html,ico,png,svg,json,woff2}',
           'app-icons/*.svg'
         ],
+        navigateFallback: '/index.html',
+        navigateFallbackAllowlist: [/^\/$/],
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
@@ -74,22 +76,69 @@ export default defineConfig({
             }
           },
           {
+            // Cache all page navigations
             urlPattern: new RegExp('^https://.*'),
             handler: 'NetworkFirst',
             options: {
-              cacheName: 'general-cache',
+              cacheName: 'pages-cache',
               networkTimeoutSeconds: 10,
               cacheableResponse: {
                 statuses: [0, 200]
               }
             }
+          },
+          {
+            // Cache form submissions and API calls
+            urlPattern: /\/api\/.*/,
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'api-cache',
+              networkTimeoutSeconds: 10,
+              cacheableResponse: {
+                statuses: [0, 200]
+              },
+              broadcastUpdate: {
+                channelName: 'api-updates'
+              }
+            }
           }
         ],
+        // Important for form handling
         skipWaiting: true,
         clientsClaim: true,
         cleanupOutdatedCaches: true,
-        navigationPreload: true,
-        sourcemap: true
+        // Enable form submissions in offline mode
+        offlineGoogleAnalytics: true,
+        // Handle form submissions
+        cacheableResponse: {
+          statuses: [0, 200]
+        },
+        // Cache HTML for offline access
+        precache: ['/index.html'],
+        // Cache routes
+        routes: [
+          {
+            urlPattern: '/',
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'start-url'
+            }
+          },
+          {
+            urlPattern: '/create',
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'create-page'
+            }
+          },
+          {
+            urlPattern: '/pay',
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'payment-page'
+            }
+          }
+        ]
       },
       manifest: {
         name: 'UPI2QR - Create Payment Pages',
