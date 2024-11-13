@@ -9,49 +9,55 @@ import { useState, useEffect } from 'react';
 import { Smartphone, WifiOff } from 'lucide-react';
 import { addPendingPayment } from '@/utils/db';
 
-// Updated UPI apps with proper package names and schemes
+// Updated UPI apps array with reordered apps
 const UPI_APPS = [
-  { 
-    name: 'PhonePe',
-    package: 'com.phonepe.app',
-    scheme: 'phonepe://pay',
-    color: '#5F259F',
-    icon: '/app-icons/phonepe-square.svg'
-  },
-  { 
-    name: 'Google Pay',
-    package: 'com.google.android.apps.nbu.paisa.user',
-    scheme: 'tez://upi/pay',
-    color: '#2DA94F',
-    icon: '/app-icons/googlepay-square.svg'
-  },
   { 
     name: 'Paytm',
     package: 'net.one97.paytm',
     scheme: 'paytmmp://pay',
     color: '#00BAF2',
-    icon: '/app-icons/paytm-square.svg'
-  },
-  { 
-    name: 'BHIM',
-    package: 'in.org.npci.upiapp',
-    scheme: 'upi://',
-    color: '#00A0E3',
-    icon: '/app-icons/bhim-square.svg'
-  },
-  { 
-    name: 'Amazon Pay',
-    package: 'in.amazon.mShop.android.shopping',
-    scheme: 'amazonpay://',
-    color: '#FF9900',
-    icon: '/app-icons/amazonpay-square.svg'
+    icon: '/app-icons/paytm-square.svg',
+    status: 'active'
   },
   { 
     name: 'CRED',
     package: 'com.dreamplug.androidapp',
     scheme: 'credpay://upi/pay',
     color: '#1C1C1C',
-    icon: '/app-icons/cred-square.svg'
+    icon: '/app-icons/cred-square.svg',
+    status: 'active'
+  },
+  { 
+    name: 'Amazon Pay',
+    package: 'in.amazon.mShop.android.shopping',
+    scheme: 'amazonpay://',
+    color: '#FF9900',
+    icon: '/app-icons/amazonpay-square.svg',
+    status: 'active'
+  },
+  { 
+    name: 'BHIM',
+    package: 'in.org.npci.upiapp',
+    scheme: 'upi://',
+    color: '#00A0E3',
+    icon: '/app-icons/bhim-square.svg',
+    status: 'active'
+  },
+  { 
+    name: 'PhonePe',
+    package: 'com.phonepe.app',
+    scheme: 'phonepe://pay',
+    color: '#5F259F',
+    icon: '/app-icons/phonepe-square.svg',
+    status: 'coming_soon'
+  },
+  { 
+    name: 'Google Pay',
+    package: 'com.google.android.apps.nbu.paisa.user',
+    scheme: 'tez://upi/pay',
+    color: '#2DA94F',
+    icon: '/app-icons/googlepay-square.svg',
+    status: 'coming_soon'
   }
 ];
 
@@ -248,23 +254,26 @@ export function UpiAppSelector({ open, onClose, paymentData }: UpiAppSelectorPro
                 <Button
                   key={app.package}
                   variant="outline"
-                  disabled={isRedirecting}
+                  disabled={isRedirecting || app.status === 'coming_soon'}
                   className={`
                     relative h-auto py-5 px-3 flex flex-col items-center justify-center gap-3
-                    border border-input/50 bg-card/50
-                    hover:bg-accent hover:border-accent
-                    active:scale-[0.98] transition-all duration-200
-                    disabled:opacity-50 disabled:cursor-not-allowed
+                    border border-input/50 
+                    ${app.status === 'coming_soon' 
+                      ? 'bg-muted/50 opacity-75 cursor-not-allowed' 
+                      : 'bg-card/50 hover:bg-accent hover:border-accent active:scale-[0.98]'
+                    }
+                    transition-all duration-200
                     group
                     ${selectedApp === app.package ? 'ring-2 ring-primary ring-offset-2 bg-accent' : ''}
                   `}
-                  onClick={() => handleAppClick(app)}
+                  onClick={() => app.status === 'active' && handleAppClick(app)}
                 >
                   {/* App Icon with enhanced hover and selection effect */}
                   <div 
                     className={`
                       w-12 h-12 sm:w-14 sm:h-14 flex items-center justify-center 
                       transition-all duration-200 
+                      ${app.status === 'coming_soon' ? 'opacity-50 blur-[1px]' : ''}
                       ${selectedApp === app.package ? 'scale-110' : 'group-hover:scale-105'}
                     `}
                   >
@@ -280,12 +289,24 @@ export function UpiAppSelector({ open, onClose, paymentData }: UpiAppSelectorPro
                   <span className={`
                     text-xs sm:text-sm font-medium text-center
                     transition-colors duration-200
-                    ${selectedApp === app.package 
-                      ? 'text-primary font-semibold' 
-                      : 'text-foreground/90 group-hover:text-foreground'}
+                    ${app.status === 'coming_soon' 
+                      ? 'text-muted-foreground' 
+                      : selectedApp === app.package 
+                        ? 'text-primary font-semibold' 
+                        : 'text-foreground/90 group-hover:text-foreground'
+                    }
                   `}>
                     {app.name}
                   </span>
+
+                  {/* Coming Soon badge - Updated positioning */}
+                  {app.status === 'coming_soon' && (
+                    <div className="absolute inset-0 flex items-end justify-center bg-background/60 rounded-lg backdrop-blur-[1px]">
+                      <div className="mb-3 text-[10px] font-medium text-muted-foreground/90 px-2.5 py-1 bg-background/90 rounded-full border border-border/50">
+                        Coming Soon
+                      </div>
+                    </div>
+                  )}
 
                   {/* Loading indicator when selected */}
                   {selectedApp === app.package && (
