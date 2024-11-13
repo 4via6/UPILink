@@ -11,6 +11,7 @@ import { SEO } from '@/components/SEO';
 import { addPendingPayment } from '@/utils/db';
 import { toast } from 'sonner';
 import { isOffline } from '@/utils/offline';
+import { UpiAppSelector } from '@/components/UpiAppSelector';
 
 // Add CTA variations
 const CTA_VARIATIONS = [
@@ -223,6 +224,13 @@ export default function PaymentSharePage() {
     navigate('/create');
   };
 
+  const [showAppSelector, setShowAppSelector] = useState(false);
+
+  // Replace the direct UPI URL opening with app selector
+  const handlePayWithApp = () => {
+    setShowAppSelector(true);
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4 sm:p-6">
       <Card className="w-full max-w-md">
@@ -299,11 +307,22 @@ export default function PaymentSharePage() {
 
           <Button 
             className="w-full mt-4 group hover:bg-primary/90 transition-all duration-300 h-auto py-2.5"
-            onClick={() => window.location.href = upiUrl}
+            onClick={handlePayWithApp}
           >
             <Smartphone className="w-4 h-4 mr-2 group-hover:scale-110 transition-transform duration-300" />
             <span className="text-sm whitespace-nowrap">Pay with UPI</span>
           </Button>
+
+          <UpiAppSelector
+            open={showAppSelector}
+            onClose={() => setShowAppSelector(false)}
+            paymentData={{
+              upiId: paymentData.upiId,
+              name: paymentData.name,
+              amount: paymentData.amount,
+              description: paymentData.description
+            }}
+          />
 
           {/* Collapsible Embed Section */}
           {showEmbed && (
