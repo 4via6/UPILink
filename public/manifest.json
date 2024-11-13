@@ -18,31 +18,50 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
-    }
-  ],
-  "orientation": "portrait",
-  "categories": ["finance", "utilities"],
-  "shortcuts": [
+    },
     {
-      "name": "Create Payment Page",
-      "url": "/create",
-      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+      "src": "/icon-152.png",
+      "sizes": "152x152",
+      "type": "image/png"
+    },
+    {
+      "src": "/icon-167.png",
+      "sizes": "167x167",
+      "type": "image/png"
+    },
+    {
+      "src": "/icon-180.png",
+      "sizes": "180x180",
+      "type": "image/png"
     }
   ],
-  "screenshots": [
+  "splash_screens": [
     {
       "src": "/splash-1125x2436.png",
       "sizes": "1125x2436",
-      "type": "image/png",
-      "platform": "narrow",
-      "label": "UPI2QR on iPhone X"
+      "type": "image/png"
+    },
+    {
+      "src": "/splash-1242x2208.png",
+      "sizes": "1242x2208",
+      "type": "image/png"
+    },
+    {
+      "src": "/splash-1536x2048.png",
+      "sizes": "1536x2048",
+      "type": "image/png"
+    },
+    {
+      "src": "/splash-1668x2388.png",
+      "sizes": "1668x2388",
+      "type": "image/png"
     },
     {
       "src": "/splash-2048x2732.png",
       "sizes": "2048x2732",
-      "type": "image/png",
-      "platform": "wide",
-      "label": "UPI2QR on iPad Pro"
+      "type": "image/png"
     }
-  ]
+  ],
+  "orientation": "portrait",
+  "categories": ["finance", "utilities"]
 } 
