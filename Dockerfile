@@ -16,7 +16,7 @@ COPY . .
 RUN mkdir -p src/types && \
     echo "declare module 'html2canvas/dist/html2canvas.js' { const html2canvas: any; export default html2canvas; }" > src/types/html2canvas.d.ts
 
-# Remove unused UI components and QRColorPicker
+# Remove only unused UI components, keeping the ones we need
 RUN rm -rf src/components/ui/accordion.tsx \
     src/components/ui/alert-dialog.tsx \
     src/components/ui/aspect-ratio.tsx \
@@ -29,7 +29,6 @@ RUN rm -rf src/components/ui/accordion.tsx \
     src/components/ui/collapsible.tsx \
     src/components/ui/command.tsx \
     src/components/ui/context-menu.tsx \
-    src/components/ui/dialog.tsx \
     src/components/ui/drawer.tsx \
     src/components/ui/dropdown-menu.tsx \
     src/components/ui/form.tsx \
