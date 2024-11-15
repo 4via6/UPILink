@@ -231,6 +231,22 @@ export default function PaymentSharePage() {
     setShowAppSelector(true);
   };
 
+  // Add message listener for online status
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      if (event.data.type === 'ONLINE_STATUS' && event.data.online) {
+        // Process any pending payments when we're back online
+        processPendingPayments();
+      }
+    };
+
+    navigator.serviceWorker?.addEventListener('message', handleMessage);
+
+    return () => {
+      navigator.serviceWorker?.removeEventListener('message', handleMessage);
+    };
+  }, []);
+
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4 sm:p-6">
       <Card className="w-full max-w-md">

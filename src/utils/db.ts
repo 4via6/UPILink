@@ -9,6 +9,8 @@ export interface PendingPayment {
   upiId: string;
   amount: string;
   timestamp: number;
+  intendedApp?: string;
+  intendedUrl?: string;
 }
 
 export async function openDB() {
@@ -40,4 +42,18 @@ export async function getPendingPayments() {
 export async function removePendingPayment(id: number) {
   const db = await openDB();
   return db.delete('pendingPayments', id);
+}
+
+export async function processPendingPayments() {
+  const payments = await getPendingPayments();
+  
+  for (const payment of payments) {
+    if (payment.intendedUrl) {
+      window.location.href = payment.intendedUrl;
+      
+      await removePendingPayment(payment.id!);
+      
+      break;
+    }
+  }
 } 

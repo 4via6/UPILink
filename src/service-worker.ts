@@ -79,8 +79,19 @@ self.addEventListener('sync', (event) => {
 async function syncPayments() {
   try {
     const pendingPayments = await getPendingPayments();
+    
+    // Process each payment
     for (const payment of pendingPayments) {
-      await processPayment(payment);
+      if (payment.intendedUrl) {
+        // Notify client to handle the UPI app opening
+        const clients = await self.clients.matchAll();
+        clients.forEach(client => {
+          client.postMessage({
+            type: 'PROCESS_PAYMENT',
+            payment
+          });
+        });
+      }
     }
   } catch (error) {
     console.error('Error syncing payments:', error);
@@ -90,10 +101,6 @@ async function syncPayments() {
 async function getPendingPayments() {
   // Implement getting pending payments from IndexedDB
   return [];
-}
-
-async function processPayment(payment: any) {
-  // Implement processing payment
 }
 
 // Handle push notifications
@@ -107,5 +114,20 @@ self.addEventListener('push', (event) => {
 
   event.waitUntil(
     self.registration.showNotification('UPI2QR', options)
+  );
+});
+
+// Add handler for online events
+self.addEventListener('online', (event) => {
+  event.waitUntil(
+    (async () => {
+      const clients = await self.clients.matchAll();
+      clients.forEach(client => {
+        client.postMessage({
+          type: 'ONLINE_STATUS',
+          online: true
+        });
+      });
+    })()
   );
 }); 

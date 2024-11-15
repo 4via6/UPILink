@@ -134,11 +134,6 @@ export function UpiAppSelector({ open, onClose, paymentData }: UpiAppSelectorPro
   const handleAppClick = async (app: typeof UPI_APPS[0]) => {
     if (isRedirecting || !isMobile) return;
     
-    if (!isOnline) {
-      handleOfflinePayment();
-      return;
-    }
-
     setIsRedirecting(true);
     setSelectedApp(app.package);
 
@@ -161,15 +156,29 @@ export function UpiAppSelector({ open, onClose, paymentData }: UpiAppSelectorPro
 
       const upiParams = new URLSearchParams(baseParams).toString();
 
+      // Store payment intent in IndexedDB if offline
+      if (!navigator.onLine) {
+        await handleOfflinePayment();
+        
+        // Store the intended app and URL for later
+        await addPendingPayment({
+          ...paymentData,
+          timestamp: Date.now(),
+          intendedApp: app.name,
+          intendedUrl: `${app.scheme}?${upiParams}`
+        });
+        
+        onClose();
+        return;
+      }
+
+      // Online flow remains the same
       if (app.name === 'Google Pay') {
-        // Special handling for GPay
         appUrl = `tez://upi/pay?${upiParams}&mode=00&orgid=159761`;
       } else if (app.name === 'PhonePe') {
-        // Special handling for PhonePe
-        const merchantId = "MERCHANTUAT"; // Optional: Add if you have a merchant ID
+        const merchantId = "MERCHANTUAT";
         appUrl = `phonepe://pay?${upiParams}&redirect=true&merchant=${merchantId}`;
       } else {
-        // Default UPI URL construction for other apps
         appUrl = `${app.scheme}?${upiParams}`;
       }
 
@@ -206,10 +215,10 @@ export function UpiAppSelector({ open, onClose, paymentData }: UpiAppSelectorPro
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-[95vw] w-[400px] rounded-xl p-0 gap-0 border-0 shadow-xl overflow-hidden bg-background">
-        {/* Header Section */}
-        <DialogHeader className="p-6 border-b bg-card/50">
-          <DialogTitle className="text-xl font-semibold tracking-tight">
+      <DialogContent className="max-w-[90vw] w-[340px] rounded-lg p-0 gap-0 border-0 shadow-lg overflow-hidden bg-background">
+        {/* More compact header */}
+        <DialogHeader className="p-4 border-b bg-card/50">
+          <DialogTitle className="text-lg font-semibold tracking-tight">
             Select Payment App
             {selectedApp && !isRedirecting && (
               <span className="text-xs text-muted-foreground font-normal ml-2">
@@ -217,7 +226,7 @@ export function UpiAppSelector({ open, onClose, paymentData }: UpiAppSelectorPro
               </span>
             )}
           </DialogTitle>
-          <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
+          <p className="text-xs text-muted-foreground mt-1.5 leading-relaxed">
             {!isOnline 
               ? "You're currently offline. Payment will be saved for later."
               : isMobile 
@@ -228,35 +237,36 @@ export function UpiAppSelector({ open, onClose, paymentData }: UpiAppSelectorPro
           </p>
         </DialogHeader>
 
-        {/* Content Section */}
-        <div className="p-6 bg-background">
+        {/* More compact content section */}
+        <div className="p-4 bg-background">
           {!isOnline ? (
-            // Offline View
-            <div className="py-6 text-center">
-              <div className="inline-flex p-3 rounded-full bg-muted mb-5">
-                <WifiOff className="h-8 w-8 text-muted-foreground" />
+            // Compact offline view
+            <div className="py-4 text-center">
+              <div className="inline-flex p-2.5 rounded-full bg-muted mb-4">
+                <WifiOff className="h-6 w-6 text-muted-foreground" />
               </div>
-              <h3 className="text-lg font-medium mb-3">You're Offline</h3>
-              <p className="text-sm text-muted-foreground mb-6 max-w-[280px] mx-auto">
+              <h3 className="text-base font-medium mb-2">You're Offline</h3>
+              <p className="text-xs text-muted-foreground mb-4 max-w-[260px] mx-auto">
                 Your payment will be saved and processed automatically when you're back online.
               </p>
               <Button 
                 onClick={handleOfflinePayment}
-                className="w-full max-w-[200px]"
+                className="w-full max-w-[180px]"
+                size="sm"
               >
                 Save Payment for Later
               </Button>
             </div>
           ) : isMobile ? (
-            // Mobile Online View - App Selection Grid
-            <div className="grid grid-cols-2 gap-4">
+            // Compact app grid
+            <div className="grid grid-cols-2 gap-3">
               {UPI_APPS.map((app) => (
                 <Button
                   key={app.package}
                   variant="outline"
                   disabled={isRedirecting || app.status === 'coming_soon'}
                   className={`
-                    relative h-auto py-6 px-4 flex flex-col items-center justify-center gap-4
+                    relative h-auto py-4 px-3 flex flex-col items-center justify-center gap-3
                     border border-input/50 
                     ${app.status === 'coming_soon' 
                       ? 'bg-muted/50 opacity-75 cursor-not-allowed' 
@@ -268,10 +278,10 @@ export function UpiAppSelector({ open, onClose, paymentData }: UpiAppSelectorPro
                   `}
                   onClick={() => app.status === 'active' && handleAppClick(app)}
                 >
-                  {/* App Icon */}
+                  {/* Smaller app icon */}
                   <div 
                     className={`
-                      w-14 h-14 flex items-center justify-center 
+                      w-11 h-11 flex items-center justify-center 
                       transition-all duration-200 
                       ${app.status === 'coming_soon' ? 'opacity-50 blur-[1px]' : ''}
                       ${selectedApp === app.package ? 'scale-110' : 'group-hover:scale-105'}
@@ -285,9 +295,9 @@ export function UpiAppSelector({ open, onClose, paymentData }: UpiAppSelectorPro
                     />
                   </div>
                   
-                  {/* App name */}
+                  {/* Smaller app name */}
                   <span className={`
-                    text-sm font-medium text-center
+                    text-xs font-medium text-center
                     transition-colors duration-200
                     ${app.status === 'coming_soon' 
                       ? 'text-muted-foreground' 
@@ -299,19 +309,19 @@ export function UpiAppSelector({ open, onClose, paymentData }: UpiAppSelectorPro
                     {app.name}
                   </span>
 
-                  {/* Coming Soon badge */}
+                  {/* Smaller coming soon badge */}
                   {app.status === 'coming_soon' && (
                     <div className="absolute inset-0 flex items-end justify-center bg-background/60 rounded-lg backdrop-blur-[1px]">
-                      <div className="mb-4 text-[10px] font-medium text-muted-foreground/90 px-3 py-1 bg-background/90 rounded-full border border-border/50">
+                      <div className="mb-3 text-[9px] font-medium text-muted-foreground/90 px-2.5 py-0.5 bg-background/90 rounded-full border border-border/50">
                         Coming Soon
                       </div>
                     </div>
                   )}
 
-                  {/* Loading indicator */}
+                  {/* Smaller loading indicator */}
                   {selectedApp === app.package && (
                     <div className="absolute inset-0 flex items-center justify-center rounded-lg bg-background/50">
-                      <div className="animate-pulse text-xs text-primary font-medium px-3 py-1.5 bg-background/90 rounded-full">
+                      <div className="animate-pulse text-[10px] text-primary font-medium px-2.5 py-1 bg-background/90 rounded-full">
                         Opening {app.name}...
                       </div>
                     </div>
@@ -320,23 +330,23 @@ export function UpiAppSelector({ open, onClose, paymentData }: UpiAppSelectorPro
               ))}
             </div>
           ) : (
-            // Desktop View
-            <div className="py-6 text-center">
-              <div className="inline-flex p-3 rounded-full bg-muted mb-5">
-                <Smartphone className="h-8 w-8 text-muted-foreground" />
+            // Compact desktop view
+            <div className="py-4 text-center">
+              <div className="inline-flex p-2.5 rounded-full bg-muted mb-4">
+                <Smartphone className="h-6 w-6 text-muted-foreground" />
               </div>
-              <h3 className="text-lg font-medium mb-3">Mobile Only Feature</h3>
-              <p className="text-sm text-muted-foreground mb-4 max-w-[280px] mx-auto">
+              <h3 className="text-base font-medium mb-2">Mobile Only Feature</h3>
+              <p className="text-xs text-muted-foreground mb-3 max-w-[260px] mx-auto">
                 Please scan the QR code or open this page on your mobile device to use UPI apps.
               </p>
             </div>
           )}
           
-          {/* Payment Details Card */}
-          <div className="mt-6 p-4 bg-muted/50 rounded-lg text-sm space-y-2.5 border border-input/10">
+          {/* Compact payment details card */}
+          <div className="mt-4 p-3 bg-muted/50 rounded-lg text-xs space-y-2 border border-input/10">
             <div className="flex items-center justify-between">
               <p className="font-medium text-foreground/80">Payment Details</p>
-              <span className="text-xs text-muted-foreground">UPI Payment</span>
+              <span className="text-[10px] text-muted-foreground">UPI Payment</span>
             </div>
             <div className="flex items-center justify-between text-muted-foreground">
               <span>To: {paymentData.name}</span>
