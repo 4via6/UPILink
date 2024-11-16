@@ -9,7 +9,6 @@ env:
   GIT_USER_EMAIL: "av7312002@gmail.com"
   GIT_USER_NAME: "Harsh-2002"
   TZ: "Asia/Kolkata" 
-  SLACK_WEBHOOK: "https://hooks.slack.com/services/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"
 
 jobs:
   build-and-push:
@@ -18,10 +17,23 @@ jobs:
       contents: read
       packages: write
     steps:
+      - name: Notify Deployment Start
+        run: |
+          curl \
+            -u ${{ secrets.NTFY_CRED }} \
+            -H "Title: 🚀 UPI2QR Deployment Started" \
+            -H "Priority: default" \
+            -H "Tags: rocket,hourglass" \
+            -H "Content-Type: text/plain" \
+            -d $'👤 Triggered By: ${{ github.actor }}\n📝 Commit Message: ${{ github.event.head_commit.message }}\n⏰ Start Time: $(date)' \
+            ${{ secrets.NTFY_URL }}
+
       - name: Checkout repository
+        id: checkout
         uses: actions/checkout@v4
 
       - name: Configure Git
+        id: git_config
         run: |
           git config --global user.email "${{ env.GIT_USER_EMAIL }}"
           git config --global user.name "${{ env.GIT_USER_NAME }}"
@@ -32,8 +44,8 @@ jobs:
           echo "tag=$(TZ='Asia/Kolkata' date +'%Y%m%d-%H%M%S')" >> $GITHUB_OUTPUT
           echo "Using tag: $(TZ='Asia/Kolkata' date +'%Y%m%d-%H%M%S')"
 
-      # Login to private registry
       - name: Log into Private Registry
+        id: docker_login
         uses: docker/login-action@v3
         with:
           registry: ${{ secrets.PRIVATE_DOCKER_REGISTRY_URL }}
@@ -41,6 +53,7 @@ jobs:
           password: ${{ secrets.PRIVATE_DOCKERHUB_TOKEN }}
 
       - name: Build and push
+        id: docker_build
         uses: docker/build-push-action@v6
         with:
           context: .
@@ -50,6 +63,7 @@ jobs:
             ${{ secrets.PRIVATE_DOCKER_REGISTRY_URL }}/upi-link:latest
 
       - name: Clone and Update Manifest
+        id: update_manifest
         run: |
           # Ensure clean state
           rm -rf argocd || true
@@ -67,6 +81,7 @@ jobs:
           git push || echo "No changes to push"
           
       - name: Login to ArgoCD
+        id: argocd_login
         run: |
           argocd login argocd.srvr.site --grpc-web \
             --username ${{ secrets.ARGOCD_USERNAME }} \
@@ -84,91 +99,36 @@ jobs:
           argocd app sync k3s --force --prune --retry-limit 3
           argocd app wait k3s --timeout 600
 
-      - name: Notify Slack on Success
+      - name: Notify Success
         if: success()
         run: |
-          curl -X POST -H 'Content-type: application/json' \
-            --data '{
-              "blocks": [
-                {
-                  "type": "header",
-                  "text": {
-                    "type": "plain_text",
-                    "text": "✅ Deployment Successful",
-                    "emoji": true
-                  }
-                },
-                {
-                  "type": "section",
-                  "fields": [
-                    {
-                      "type": "mrkdwn",
-                      "text": "*Image:*\n`${{ secrets.PRIVATE_DOCKER_REGISTRY_URL }}/upi-link:${{ steps.timestamp.outputs.tag }}`"
-                    },
-                    {
-                      "type": "mrkdwn",
-                      "text": "*Environment:*\nProduction"
-                    }
-                  ]
-                },
-                {
-                  "type": "section",
-                  "fields": [
-                    {
-                      "type": "mrkdwn",
-                      "text": "*Last Commit:*\n`${{ steps.commit.outputs.message }}`"
-                    },
-                    {
-                      "type": "mrkdwn",
-                      "text": "*Deployed By:*\n${{ github.actor }}"
-                    }
-                  ]
-                },
-                {
-                  "type": "context",
-                  "elements": [
-                    {
-                      "type": "mrkdwn",
-                      "text": "Deployment completed at: $(date)"
-                    }
-                  ]
-                }
-              ]
-            }' ${{ env.SLACK_WEBHOOK }}
+          curl \
+            -u ${{ secrets.NTFY_CRED }} \
+            -H "Title: ✅ UPI2QR Deployment Successful" \
+            -H "Priority: default" \
+            -H "Tags: white_check_mark,rocket" \
+            -H "Content-Type: text/plain" \
+            -d $'🔄 Image: ${{ secrets.PRIVATE_DOCKER_REGISTRY_URL }}/upi-link:${{ steps.timestamp.outputs.tag }}\n👤 Deployed By: ${{ github.actor }}\n📝 Last Commit: ${{ steps.commit.outputs.message }}\n⚡ Duration: ${{ format(github.run_duration, ''m:ss'') }}\n⏰ Time: $(date)' \
+            ${{ secrets.NTFY_URL }}
 
-      - name: Notify Slack on Failure
+      - name: Notify Failure
         if: failure()
         run: |
-          curl -X POST -H 'Content-type: application/json' \
-            --data '{
-              "blocks": [
-                {
-                  "type": "header",
-                  "text": {
-                    "type": "plain_text",
-                    "text": "❌ Deployment Failed",
-                    "emoji": true
-                  }
-                },
-                {
-                  "type": "section",
-                  "fields": [
-                    {
-                      "type": "mrkdwn",
-                      "text": "*Image:*\n`${{ secrets.PRIVATE_DOCKER_REGISTRY_URL }}/upi-link:${{ steps.timestamp.outputs.tag }}`"
-                    },
-                    {
-                      "type": "mrkdwn",
-                      "text": "*Environment:*\nProduction"
-                    }
-                  ]
-                },
-                {
-                  "type": "section",
-                  "text": {
-                    "type": "mrkdwn",
-                    "text": "*Error:* Check GitHub Actions for details"
-                  }
-                }
-              ]
-            }' ${{ env.SLACK_WEBHOOK }}
+          # Determine which step failed
+          FAILED_STEP="${{ steps.checkout.conclusion == 'failure' && 'Checkout' || 
+            steps.git_config.conclusion == 'failure' && 'Git Configuration' ||
+            steps.docker_login.conclusion == 'failure' && 'Docker Login' ||
+            steps.docker_build.conclusion == 'failure' && 'Docker Build' ||
+            steps.update_manifest.conclusion == 'failure' && 'Manifest Update' ||
+            steps.argocd_login.conclusion == 'failure' && 'ArgoCD Login' ||
+            steps.sync.conclusion == 'failure' && 'ArgoCD Sync' ||
+            'Unknown Step' }}"
+          
+          curl \
+            -u ${{ secrets.NTFY_CRED }} \
+            -H "Title: ❌ UPI2QR Deployment Failed" \
+            -H "Priority: high" \
+            -H "Tags: x,warning" \
+            -H "Content-Type: text/plain" \
+            -d $'🔄 Image: ${{ secrets.PRIVATE_DOCKER_REGISTRY_URL }}/upi-link:${{ steps.timestamp.outputs.tag }}\n👤 Attempted By: ${{ github.actor }}\n❌ Failed Step: '"$FAILED_STEP"$'\n⚡ Failed After: ${{ format(github.run_duration, ''m:ss'') }}\n⏰ Time: $(date)\n\n❗ Check GitHub Actions for detailed logs: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}' \
+            ${{ secrets.NTFY_URL }}
