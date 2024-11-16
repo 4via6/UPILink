@@ -58,8 +58,21 @@ registerRoute(
   })
 );
 
-// Handle offline functionality
+// Add handling for custom schemes
 self.addEventListener('fetch', (event) => {
+  const url = new URL(event.request.url);
+  
+  // Allow UPI schemes to pass through without network check
+  if (url.protocol === 'upi:' || 
+      url.protocol === 'phonepe:' || 
+      url.protocol === 'tez:' || 
+      url.protocol === 'paytmmp:' || 
+      url.protocol === 'credpay:' || 
+      url.protocol === 'intent:') {
+    return;
+  }
+
+  // Existing navigate handling
   if (event.request.mode === 'navigate') {
     event.respondWith(
       fetch(event.request).catch(() => {
@@ -130,4 +143,18 @@ self.addEventListener('online', (event) => {
       });
     })()
   );
-}); 
+});
+
+// Update cache strategy to include app icons
+registerRoute(
+  /\/app-icons\/.+\.svg$/,
+  new CacheFirst({
+    cacheName: 'app-icons',
+    plugins: [
+      new ExpirationPlugin({
+        maxEntries: 10,
+        maxAgeSeconds: 30 * 24 * 60 * 60, // 30 days
+      }),
+    ],
+  })
+); 

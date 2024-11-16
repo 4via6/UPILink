@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useEffect, useState, useRef } from 'react';
 import { SEO } from '@/components/SEO';
+import { FAQSection } from '@/components/FAQSection';
 
 export default function HomePage() {
   const navigate = useNavigate();
@@ -395,6 +396,9 @@ export default function HomePage() {
             </div>
           </motion.div>
         </div>
+
+        {/* Add FAQ Section before footer */}
+        <FAQSection />
       </div>
     </>
   );

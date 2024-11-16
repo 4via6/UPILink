@@ -138,8 +138,7 @@ export function UpiAppSelector({ open, onClose, paymentData }: UpiAppSelectorPro
     setSelectedApp(app.package);
 
     try {
-      // Construct UPI parameters based on app
-      let appUrl = '';
+      // Construct UPI parameters
       const baseParams = {
         pa: paymentData.upiId,
         pn: encodeURIComponent(paymentData.name),
@@ -155,24 +154,9 @@ export function UpiAppSelector({ open, onClose, paymentData }: UpiAppSelectorPro
       }
 
       const upiParams = new URLSearchParams(baseParams).toString();
+      let appUrl = '';
 
-      // Store payment intent in IndexedDB if offline
-      if (!navigator.onLine) {
-        await handleOfflinePayment();
-        
-        // Store the intended app and URL for later
-        await addPendingPayment({
-          ...paymentData,
-          timestamp: Date.now(),
-          intendedApp: app.name,
-          intendedUrl: `${app.scheme}?${upiParams}`
-        });
-        
-        onClose();
-        return;
-      }
-
-      // Online flow remains the same
+      // Construct app-specific URLs
       if (app.name === 'Google Pay') {
         appUrl = `tez://upi/pay?${upiParams}&mode=00&orgid=159761`;
       } else if (app.name === 'PhonePe') {
@@ -182,25 +166,18 @@ export function UpiAppSelector({ open, onClose, paymentData }: UpiAppSelectorPro
         appUrl = `${app.scheme}?${upiParams}`;
       }
 
+      // Handle Android intent
       if (/android/i.test(navigator.userAgent)) {
-        // For Android: Use intent URL
         const intentUrl = `intent://${appUrl.replace(/^[^:]+:\/\//, '')}#Intent;scheme=${
           app.name === 'Google Pay' ? 'tez' : app.scheme.split(':')[0]
         };package=${app.package};end`;
-        setTimeout(() => {
-          window.location.href = intentUrl;
-        }, 500); // Small delay before redirect
+        window.location.href = intentUrl;
       } else {
-        // For iOS: Use direct URL scheme
-        setTimeout(() => {
-          const link = document.createElement('a');
-          link.href = appUrl;
-          link.rel = 'noopener noreferrer';
-          link.click();
-        }, 500);
+        // Handle iOS and other platforms
+        window.location.href = appUrl;
       }
 
-      // Remove the automatic closing
+      // Keep popup open for a while to allow app switch
       setTimeout(() => {
         setIsRedirecting(false);
         setSelectedApp(null);
@@ -227,38 +204,18 @@ export function UpiAppSelector({ open, onClose, paymentData }: UpiAppSelectorPro
             )}
           </DialogTitle>
           <p className="text-xs text-muted-foreground mt-1.5 leading-relaxed">
-            {!isOnline 
-              ? "You're currently offline. Payment will be saved for later."
-              : isMobile 
-                ? selectedApp 
-                  ? "App opened. You can close this window after completing the payment."
-                  : "Choose your preferred UPI app to complete the payment"
-                : "UPI app payments are only available on mobile devices"}
+            {isMobile 
+              ? selectedApp 
+                ? "App opened. You can close this window after completing the payment."
+                : "Choose your preferred UPI app to complete the payment"
+              : "UPI app payments are only available on mobile devices"
+            }
           </p>
         </DialogHeader>
 
         {/* More compact content section */}
         <div className="p-4 bg-background">
-          {!isOnline ? (
-            // Compact offline view
-            <div className="py-4 text-center">
-              <div className="inline-flex p-2.5 rounded-full bg-muted mb-4">
-                <WifiOff className="h-6 w-6 text-muted-foreground" />
-              </div>
-              <h3 className="text-base font-medium mb-2">You're Offline</h3>
-              <p className="text-xs text-muted-foreground mb-4 max-w-[260px] mx-auto">
-                Your payment will be saved and processed automatically when you're back online.
-              </p>
-              <Button 
-                onClick={handleOfflinePayment}
-                className="w-full max-w-[180px]"
-                size="sm"
-              >
-                Save Payment for Later
-              </Button>
-            </div>
-          ) : isMobile ? (
-            // Compact app grid
+          {isMobile ? (
             <div className="grid grid-cols-2 gap-3">
               {UPI_APPS.map((app) => (
                 <Button

@@ -29,8 +29,18 @@ export function Footer() {
               <span>support@upi2qr.in</span>
             </a>
 
+            {/* Trademark Disclaimers */}
+            <div className="max-w-2xl mx-auto mt-4 space-y-2 text-[10px] sm:text-xs text-muted-foreground/70 text-center">
+              <p>
+                UPI (Unified Payments Interface) is a registered trademark of National Payments Corporation of India.
+              </p>
+              <p>
+                Google Pay™, PhonePe™, Paytm™, BHIM™, Amazon Pay™, CRED™, and other UPI payment app names and logos are trademarks or registered trademarks of their respective owners and are used for payment purposes only.
+              </p>
+            </div>
+
             {/* Copyright */}
-            <div className="text-[10px] sm:text-xs text-muted-foreground/80">
+            <div className="text-[10px] sm:text-xs text-muted-foreground/80 mt-2">
               © {currentYear} UPI2QR. All rights reserved.
             </div>
           </div>
