@@ -27,7 +27,7 @@ jobs:
       - name: Notify Deployment Start
         run: |
           curl \
-            -u ${{ secrets.NTFY_CRED }} \
+            -H "Authorization: Bearer ${{ secrets.NTFY_CRED }}" \
             -H "Title: 🚀 ${{ env.APP_NAME }} Deployment Started" \
             -H "Priority: default" \
             -H "Tags: rocket,hourglass" \
@@ -115,7 +115,7 @@ jobs:
           SECS=$((DURATION % 60))
           
           curl \
-            -u ${{ secrets.NTFY_CRED }} \
+            -H "Authorization: Bearer ${{ secrets.NTFY_CRED }}" \
             -H "Title: ✅ ${{ env.APP_NAME }} Deployment Successful" \
             -H "Priority: default" \
             -H "Tags: white_check_mark,rocket" \
@@ -142,7 +142,7 @@ jobs:
             'Unknown Step' }}"
           
           curl \
-            -u ${{ secrets.NTFY_CRED }} \
+            -H "Authorization: Bearer ${{ secrets.NTFY_CRED }}" \
             -H "Title: ❌ ${{ env.APP_NAME }} Deployment Failed" \
             -H "Priority: high" \
             -H "Tags: x,warning" \
