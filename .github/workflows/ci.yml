@@ -127,7 +127,7 @@ jobs:
           
           curl -X POST \
             -H "Authorization: Bearer ${{ secrets.NTFY_CRED }}" \
-            -H "Title: ${{ env.APP_NAME }} Deployment Successful" \
+            -H "Title: ${{ env.APP_NAME }} ✅ Deployment Successful" \
             -H "Priority: default" \
             -H "Tags: check" \
             -H "Content-Type: text/plain" \
@@ -163,7 +163,7 @@ jobs:
           
           curl -X POST \
             -H "Authorization: Bearer ${{ secrets.NTFY_CRED }}" \
-            -H "Title: ${{ env.APP_NAME }} Deployment Failed" \
+            -H "Title: ${{ env.APP_NAME }} ❌ Deployment Failed" \
             -H "Priority: high" \
             -H "Tags: warning" \
             -H "Content-Type: text/plain" \
