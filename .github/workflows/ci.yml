@@ -18,22 +18,32 @@ jobs:
       packages: write
     steps:
       - name: Set App Info
+        id: app_info
         run: |
-          echo "APP_NAME=$(echo '${{ github.repository }}' | awk -F '/' '{print $2}')" >> $GITHUB_ENV
-          echo "REPO_OWNER=$(echo '${{ github.repository }}' | awk -F '/' '{print $1}')" >> $GITHUB_ENV
-          START_TIME=$(date +%s)
-          echo "start_time=$START_TIME" >> $GITHUB_ENV
+          {
+            echo "APP_NAME=$(echo '${{ github.repository }}' | awk -F '/' '{print $2}')"
+            echo "REPO_OWNER=$(echo '${{ github.repository }}' | awk -F '/' '{print $1}')"
+            echo "WORKFLOW_START=$(date +%s)"
+          } >> $GITHUB_ENV
 
       - name: Notify Deployment Start
+        id: notify_start
         run: |
-          curl \
+          START_TIME=$(date '+%Y/%m/%d, %H:%M')
+          MESSAGE="Repository: ${{ github.repository }}
+          Triggered By: ${{ github.actor }}
+          Commit: ${{ github.event.head_commit.message }}
+          Branch: ${{ github.ref_name }}
+          Time: $START_TIME"
+          
+          curl -X POST \
             -H "Authorization: Bearer ${{ secrets.NTFY_CRED }}" \
-            -H "Title: 🚀 ${{ env.APP_NAME }} Deployment Started" \
+            -H "Title: ${{ env.APP_NAME }} Deployment Started" \
             -H "Priority: default" \
-            -H "Tags: rocket,hourglass" \
+            -H "Tags: rocket" \
             -H "Content-Type: text/plain" \
-            -d $'📦 Repository: ${{ github.repository }}\n👤 Triggered By: ${{ github.actor }}\n📝 Commit Message: ${{ github.event.head_commit.message }}\n🔀 Branch: ${{ github.ref_name }}\n⏰ Start Time: $(date)' \
-            ${{ secrets.NTFY_URL }}
+            -d "$MESSAGE" \
+            "${{ secrets.NTFY_URL }}"
 
       - name: Checkout repository
         id: checkout
@@ -66,23 +76,16 @@ jobs:
           context: .
           push: true
           tags: |
-            ${{ secrets.PRIVATE_DOCKER_REGISTRY_URL }}/upi-link:${{ steps.timestamp.outputs.tag }}
-            ${{ secrets.PRIVATE_DOCKER_REGISTRY_URL }}/upi-link:latest
+            ${{ secrets.PRIVATE_DOCKER_REGISTRY_URL }}/${{ env.IMAGE_NAME }}:${{ steps.timestamp.outputs.tag }}
+            ${{ secrets.PRIVATE_DOCKER_REGISTRY_URL }}/${{ env.IMAGE_NAME }}:latest
 
       - name: Clone and Update Manifest
         id: update_manifest
         run: |
-          # Ensure clean state
           rm -rf argocd || true
-          
-          # Clone with SSH
           git clone $MANIFEST_REPO argocd
-          
-          # Update manifest with new tag
           cd argocd
           sed -i "s|image: ${{ secrets.PRIVATE_DOCKER_REGISTRY_URL }}/upi-link:.*|image: ${{ secrets.PRIVATE_DOCKER_REGISTRY_URL }}/upi-link:${{ steps.timestamp.outputs.tag }}|" $MANIFEST_PATH
-          
-          # Commit and push changes
           git add $MANIFEST_PATH
           git commit -m "Update upi-link to IST timestamp: ${{ steps.timestamp.outputs.tag }}" || echo "No changes to commit"
           git push || echo "No changes to push"
@@ -109,29 +112,36 @@ jobs:
       - name: Notify Success
         if: success()
         run: |
-          END_TIME=$(date +%s)
-          DURATION=$((END_TIME - ${{ env.start_time }}))
-          MINS=$((DURATION / 60))
-          SECS=$((DURATION % 60))
+          END_TIME=$(date '+%Y/%m/%d, %H:%M')
+          DURATION=$(( $(date +%s) - ${{ env.WORKFLOW_START }} ))
+          MINS=$(( DURATION / 60 ))
+          SECS=$(( DURATION % 60 ))
           
-          curl \
+          MESSAGE="Repository: ${{ github.repository }}
+          Image: ${{ secrets.PRIVATE_DOCKER_REGISTRY_URL }}/${{ env.IMAGE_NAME }}:${{ steps.timestamp.outputs.tag }}
+          Deployed By: ${{ github.actor }}
+          Branch: ${{ github.ref_name }}
+          Commit: ${{ steps.commit.outputs.message }}
+          Duration: ${MINS}m ${SECS}s
+          Time: $END_TIME"
+          
+          curl -X POST \
             -H "Authorization: Bearer ${{ secrets.NTFY_CRED }}" \
-            -H "Title: ✅ ${{ env.APP_NAME }} Deployment Successful" \
+            -H "Title: ${{ env.APP_NAME }} Deployment Successful" \
             -H "Priority: default" \
-            -H "Tags: white_check_mark,rocket" \
+            -H "Tags: check" \
             -H "Content-Type: text/plain" \
-            -d $'📦 Repository: ${{ github.repository }}\n🔄 Image: ${{ secrets.PRIVATE_DOCKER_REGISTRY_URL }}/${{ env.IMAGE_NAME }}:${{ steps.timestamp.outputs.tag }}\n👤 Deployed By: ${{ github.actor }}\n🔀 Branch: ${{ github.ref_name }}\n📝 Last Commit: ${{ steps.commit.outputs.message }}\n⚡ Duration: '"${MINS}m ${SECS}s"$'\n⏰ Time: $(date)' \
-            ${{ secrets.NTFY_URL }}
+            -d "$MESSAGE" \
+            "${{ secrets.NTFY_URL }}"
 
       - name: Notify Failure
         if: failure()
         run: |
-          END_TIME=$(date +%s)
-          DURATION=$((END_TIME - ${{ env.start_time }}))
-          MINS=$((DURATION / 60))
-          SECS=$((DURATION % 60))
+          END_TIME=$(date '+%Y/%m/%d, %H:%M')
+          DURATION=$(( $(date +%s) - ${{ env.WORKFLOW_START }} ))
+          MINS=$(( DURATION / 60 ))
+          SECS=$(( DURATION % 60 ))
           
-          # Determine which step failed
           FAILED_STEP="${{ steps.checkout.conclusion == 'failure' && 'Checkout' || 
             steps.git_config.conclusion == 'failure' && 'Git Configuration' ||
             steps.docker_login.conclusion == 'failure' && 'Docker Login' ||
@@ -141,11 +151,21 @@ jobs:
             steps.sync.conclusion == 'failure' && 'ArgoCD Sync' ||
             'Unknown Step' }}"
           
-          curl \
+          MESSAGE="Repository: ${{ github.repository }}
+          Image: ${{ secrets.PRIVATE_DOCKER_REGISTRY_URL }}/${{ env.IMAGE_NAME }}:${{ steps.timestamp.outputs.tag }}
+          Attempted By: ${{ github.actor }}
+          Branch: ${{ github.ref_name }}
+          Failed Step: $FAILED_STEP
+          Duration: ${MINS}m ${SECS}s
+          Time: $END_TIME
+          
+          Check logs: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          
+          curl -X POST \
             -H "Authorization: Bearer ${{ secrets.NTFY_CRED }}" \
-            -H "Title: ❌ ${{ env.APP_NAME }} Deployment Failed" \
+            -H "Title: ${{ env.APP_NAME }} Deployment Failed" \
             -H "Priority: high" \
-            -H "Tags: x,warning" \
+            -H "Tags: warning" \
             -H "Content-Type: text/plain" \
-            -d $'📦 Repository: ${{ github.repository }}\n🔄 Image: ${{ secrets.PRIVATE_DOCKER_REGISTRY_URL }}/${{ env.IMAGE_NAME }}:${{ steps.timestamp.outputs.tag }}\n👤 Attempted By: ${{ github.actor }}\n🔀 Branch: ${{ github.ref_name }}\n❌ Failed Step: '"$FAILED_STEP"$'\n⚡ Failed After: '"${MINS}m ${SECS}s"$'\n⏰ Time: $(date)\n\n❗ Check GitHub Actions for detailed logs: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}' \
-            ${{ secrets.NTFY_URL }}
+            -d "$MESSAGE" \
+            "${{ secrets.NTFY_URL }}"
