@@ -36,11 +36,18 @@ function FAQItem({ question, answer }: { question: string; answer: string }) {
     <motion.div 
       initial={false}
       animate={{ backgroundColor: isOpen ? "hsl(var(--primary) / 0.05)" : "transparent" }}
-      className="border-b border-border/50 last:border-0 rounded-lg transition-colors duration-200"
+      className={`
+        border-b border-border/50 last:border-0 transition-colors duration-200
+        ${isOpen ? 'rounded-xl mb-2' : ''}
+      `}
     >
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-start justify-between w-full py-4 px-4 sm:px-6 text-left hover:bg-muted/50 rounded-lg transition-colors duration-200"
+        className={`
+          flex items-start justify-between w-full py-4 px-4 sm:px-6 text-left 
+          hover:bg-muted/50 transition-colors duration-200
+          ${isOpen ? 'rounded-t-xl' : ''}
+        `}
       >
         <span className="font-medium text-sm sm:text-base pr-4">{question}</span>
         <ChevronDown 
@@ -56,7 +63,7 @@ function FAQItem({ question, answer }: { question: string; answer: string }) {
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="overflow-hidden"
+            className="overflow-hidden rounded-b-xl"
           >
             <div className="px-4 sm:px-6 pb-4 text-sm text-muted-foreground whitespace-pre-line leading-relaxed">
               {answer.split('\n').map((line, index) => (
