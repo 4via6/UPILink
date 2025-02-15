@@ -41,7 +41,7 @@ const UPI_APPS = [
     scheme: 'upi://',
     color: '#00A0E3',
     icon: '/app-icons/bhim-square.svg',
-    status: 'active'
+    status: 'coming_soon'
   },
   { 
     name: 'PhonePe',
@@ -49,7 +49,7 @@ const UPI_APPS = [
     scheme: 'phonepe://pay',
     color: '#5F259F',
     icon: '/app-icons/phonepe-square.svg',
-    status: 'coming_soon'
+    status: 'active'
   },
   { 
     name: 'Google Pay',
@@ -57,7 +57,7 @@ const UPI_APPS = [
     scheme: 'tez://upi/pay',
     color: '#2DA94F',
     icon: '/app-icons/googlepay-square.svg',
-    status: 'coming_soon'
+    status: 'active'
   }
 ];
 
