@@ -6,8 +6,6 @@ env:
   IMAGE_NAME: upi-link
   MANIFEST_REPO: git@github.com:Harsh-2002/argocd.git
   MANIFEST_PATH: k3s/arson/UPI-Link/deployment.yaml
-  GIT_USER_EMAIL: "av7312002@gmail.com"
-  GIT_USER_NAME: "Harsh-2002"
   TZ: "Asia/Kolkata" 
 
 jobs:
@@ -26,25 +24,6 @@ jobs:
             echo "WORKFLOW_START=$(date +%s)"
           } >> $GITHUB_ENV
 
-      - name: Notify Deployment Start
-        id: notify_start
-        run: |
-          START_TIME=$(date '+%Y/%m/%d, %H:%M')
-          MESSAGE="Repository: ${{ github.repository }}
-          Triggered By: ${{ github.actor }}
-          Commit: ${{ github.event.head_commit.message }}
-          Branch: ${{ github.ref_name }}
-          Time: $START_TIME"
-          
-          curl -X POST \
-            -H "Authorization: Bearer ${{ secrets.NTFY_CRED }}" \
-            -H "Title: ${{ env.APP_NAME }} Deployment Started" \
-            -H "Priority: default" \
-            -H "Tags: rocket" \
-            -H "Content-Type: text/plain" \
-            -d "$MESSAGE" \
-            "${{ secrets.NTFY_URL }}"
-
       - name: Checkout repository
         id: checkout
         uses: actions/checkout@v4
@@ -52,8 +31,8 @@ jobs:
       - name: Configure Git
         id: git_config
         run: |
-          git config --global user.email "${{ env.GIT_USER_EMAIL }}"
-          git config --global user.name "${{ env.GIT_USER_NAME }}"
+          git config --global user.email "${{ secrets.GIT_USER_EMAIL }}"
+          git config --global user.name "${{ secrets.GIT_USER_NAME }}"
 
       - name: Generate IST timestamp tag
         id: timestamp
@@ -90,6 +69,18 @@ jobs:
           git commit -m "Update upi-link to IST timestamp: ${{ steps.timestamp.outputs.tag }}" || echo "No changes to commit"
           git push || echo "No changes to push"
           
+      - name: Install Argo CD CLI if not present
+        run: |
+          if ! command -v argocd &> /dev/null; then
+            echo "Argo CD CLI not found, installing..."
+            curl -sSL -o argocd-linux-amd64 https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64
+            chmod +x argocd-linux-amd64
+            sudo mv argocd-linux-amd64 /usr/local/bin/argocd
+          else
+            echo "Argo CD CLI is already installed"
+          fi
+          argocd version --client
+      
       - name: Login to ArgoCD
         id: argocd_login
         run: |
@@ -108,64 +99,3 @@ jobs:
           echo "Starting sync for application..."
           argocd app sync k3s --force --prune --retry-limit 3
           argocd app wait k3s --timeout 600
-
-      - name: Notify Success
-        if: success()
-        run: |
-          END_TIME=$(date '+%Y/%m/%d, %H:%M')
-          DURATION=$(( $(date +%s) - ${{ env.WORKFLOW_START }} ))
-          MINS=$(( DURATION / 60 ))
-          SECS=$(( DURATION % 60 ))
-          
-          MESSAGE="Repository: ${{ github.repository }}
-          Image: ${{ secrets.PRIVATE_DOCKER_REGISTRY_URL }}/${{ env.IMAGE_NAME }}:${{ steps.timestamp.outputs.tag }}
-          Deployed By: ${{ github.actor }}
-          Branch: ${{ github.ref_name }}
-          Commit: ${{ steps.commit.outputs.message }}
-          Duration: ${MINS}m ${SECS}s
-          Time: $END_TIME"
-          
-          curl -X POST \
-            -H "Authorization: Bearer ${{ secrets.NTFY_CRED }}" \
-            -H "Title: ${{ env.APP_NAME }} ✅ Deployment Successful" \
-            -H "Priority: default" \
-            -H "Tags: check" \
-            -H "Content-Type: text/plain" \
-            -d "$MESSAGE" \
-            "${{ secrets.NTFY_URL }}"
-
-      - name: Notify Failure
-        if: failure()
-        run: |
-          END_TIME=$(date '+%Y/%m/%d, %H:%M')
-          DURATION=$(( $(date +%s) - ${{ env.WORKFLOW_START }} ))
-          MINS=$(( DURATION / 60 ))
-          SECS=$(( DURATION % 60 ))
-          
-          FAILED_STEP="${{ steps.checkout.conclusion == 'failure' && 'Checkout' || 
-            steps.git_config.conclusion == 'failure' && 'Git Configuration' ||
-            steps.docker_login.conclusion == 'failure' && 'Docker Login' ||
-            steps.docker_build.conclusion == 'failure' && 'Docker Build' ||
-            steps.update_manifest.conclusion == 'failure' && 'Manifest Update' ||
-            steps.argocd_login.conclusion == 'failure' && 'ArgoCD Login' ||
-            steps.sync.conclusion == 'failure' && 'ArgoCD Sync' ||
-            'Unknown Step' }}"
-          
-          MESSAGE="Repository: ${{ github.repository }}
-          Image: ${{ secrets.PRIVATE_DOCKER_REGISTRY_URL }}/${{ env.IMAGE_NAME }}:${{ steps.timestamp.outputs.tag }}
-          Attempted By: ${{ github.actor }}
-          Branch: ${{ github.ref_name }}
-          Failed Step: $FAILED_STEP
-          Duration: ${MINS}m ${SECS}s
-          Time: $END_TIME
-          
-          Check logs: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-          
-          curl -X POST \
-            -H "Authorization: Bearer ${{ secrets.NTFY_CRED }}" \
-            -H "Title: ${{ env.APP_NAME }} ❌ Deployment Failed" \
-            -H "Priority: high" \
-            -H "Tags: warning" \
-            -H "Content-Type: text/plain" \
-            -d "$MESSAGE" \
-            "${{ secrets.NTFY_URL }}"
